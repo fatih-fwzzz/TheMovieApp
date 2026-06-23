@@ -19,9 +19,9 @@ public final class EmptyStateView: UIView {
 
         actionButton.setTitleColor(AppColor.onSurfaceVariant, for: .normal)
         actionButton.titleLabel?.font = AppFont.labelLG()
-        actionButton.backgroundColor = AppColor.surface
         actionButton.layer.cornerRadius = AppRadius.rounded
         actionButton.contentEdgeInsets = UIEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
+        LiquidGlassStyle.apply(to: actionButton, cornerRadius: AppRadius.rounded, tintColor: AppColor.surface)
 
         addSubview(stack)
         NSLayoutConstraint.activate([

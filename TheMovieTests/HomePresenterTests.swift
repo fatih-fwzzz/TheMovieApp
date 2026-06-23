@@ -29,17 +29,6 @@ final class HomePresenterTests: XCTestCase {
         XCTAssertNotNil(mockView.displayedViewModel)
     }
 
-    func test_didTapAllFilter_clearsGenreSelection() {
-        mockInteractor.genreId = 28
-        let expectation = expectation(description: "reload movies")
-        mockView.onShow = { expectation.fulfill() }
-
-        sut.didTapAllFilter()
-        wait(for: [expectation], timeout: 2)
-
-        XCTAssertNil(mockInteractor.genreId)
-    }
-
     func test_didSelectGenreChip_togglesGenre() {
         mockInteractor.genres = [Genre(id: 28, name: "Action")]
         let loadExpectation = expectation(description: "initial load")

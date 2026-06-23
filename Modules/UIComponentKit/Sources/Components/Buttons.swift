@@ -11,16 +11,17 @@ public final class PrimaryButton: UIButton {
         configure()
     }
 
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        LiquidGlassStyle.refreshLayout(for: self, cornerRadius: 26)
+    }
+
     private func configure() {
-        backgroundColor = AppColor.primaryContainer
         setTitleColor(AppColor.highEmphasis, for: .normal)
         titleLabel?.font = AppFont.labelLG()
         layer.cornerRadius = 26
-        layer.shadowColor = AppColor.primaryContainer.cgColor
-        layer.shadowOpacity = 0.35
-        layer.shadowRadius = 12
-        layer.shadowOffset = CGSize(width: 0, height: 4)
         contentEdgeInsets = UIEdgeInsets(top: 14, left: 24, bottom: 14, right: 24)
+        LiquidGlassStyle.apply(to: self, cornerRadius: 26, tintColor: AppColor.primaryContainer)
     }
 }
 
@@ -35,13 +36,16 @@ public final class OutlinedButton: UIButton {
         configure()
     }
 
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        LiquidGlassStyle.refreshLayout(for: self, cornerRadius: AppRadius.roundedLG)
+    }
+
     private func configure() {
-        backgroundColor = AppColor.surfaceContainer
         setTitleColor(AppColor.onSurface, for: .normal)
         titleLabel?.font = AppFont.labelLG()
         layer.cornerRadius = AppRadius.roundedLG
-        layer.borderWidth = 1
-        layer.borderColor = AppColor.outline.cgColor
         contentEdgeInsets = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
+        LiquidGlassStyle.apply(to: self, cornerRadius: AppRadius.roundedLG, tintColor: AppColor.surfaceContainer)
     }
 }

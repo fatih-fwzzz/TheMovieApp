@@ -79,10 +79,12 @@ public final class HomePresenter: HomePresenting {
         }
     }
 
-    public func didTapAllFilter() {
-        selectedGenreId = nil
-        interactor.resetPagination(genreId: nil)
-        reloadMoviesOnly()
+    public func didTapTopTen(at index: Int) {
+        guard trending.indices.contains(index),
+              let viewController = router.sourceViewController else { return }
+        Task { @MainActor in
+            router.showMovieDetail(movieId: trending[index].id, from: viewController)
+        }
     }
 
     public func didSelectGenreChip(at index: Int) {
@@ -165,7 +167,6 @@ public final class HomePresenter: HomePresenting {
             genreChips: genres.map {
                 HomeViewModel.GenreChipItem(id: $0.id, name: $0.name, isSelected: selectedGenreId == $0.id)
             },
-            isAllFilterActive: selectedGenreId == nil,
             isLoadingMore: isLoadingMore
         )
     }

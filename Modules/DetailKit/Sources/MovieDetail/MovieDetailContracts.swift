@@ -1,6 +1,11 @@
 import UIKit
 import NetworkKit
 
+public protocol MovieDetailView: AnyObject {
+    func show(viewModel: MovieDetailViewModel)
+    func show(errorMessage: String)
+}
+
 public protocol MovieDetailPresenting: AnyObject {
     func viewDidAppear()
     func didTapBack()
@@ -14,6 +19,7 @@ public protocol MovieDetailInteracting: AnyObject {
     func fetchDetail(movieId: Int) async throws -> MovieDetail
     func fetchTrailer(movieId: Int) async throws -> URL?
     func fetchCast(movieId: Int) async throws -> [CastMember]
+    func fetchReviews(movieId: Int) async throws -> PaginatedReviewsResponse
     func isFavorite(movieId: Int) -> Bool
     func toggleFavorite(_ movie: MovieDetail)
 }
@@ -31,6 +37,15 @@ public struct MovieDetailViewModel {
         public let imageURL: URL?
     }
 
+    public struct ReviewItem {
+        public let id: String
+        public let author: String
+        public let content: String
+        public let dateText: String
+        public let ratingText: String
+        public let avatarURL: URL?
+    }
+
     public let title: String
     public let overview: String
     public let ratingText: String
@@ -41,6 +56,7 @@ public struct MovieDetailViewModel {
     public let posterURL: URL?
     public let trailerURL: URL?
     public let cast: [CastItem]
+    public let previewReviews: [ReviewItem]
     public let isOverviewExpanded: Bool
     public let isLoading: Bool
     public let isFavorite: Bool

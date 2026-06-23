@@ -15,6 +15,11 @@ public final class GenreChipButton: UIButton {
         configure()
     }
 
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        LiquidGlassStyle.refreshLayout(for: self, cornerRadius: 18)
+    }
+
     private func configure() {
         titleLabel?.font = AppFont.labelLG()
         layer.cornerRadius = 18
@@ -24,25 +29,11 @@ public final class GenreChipButton: UIButton {
 
     private func updateAppearance() {
         if isChipSelected {
-            backgroundColor = AppColor.primaryContainer
             setTitleColor(AppColor.highEmphasis, for: .normal)
+            LiquidGlassStyle.apply(to: self, cornerRadius: 18, tintColor: AppColor.primaryContainer)
         } else {
-            backgroundColor = AppColor.surfaceContainerHigh
             setTitleColor(AppColor.onSurfaceVariant, for: .normal)
+            LiquidGlassStyle.apply(to: self, cornerRadius: 18, tintColor: AppColor.surfaceContainerHigh)
         }
     }
-}
-
-public final class AllFilterPillButton: UIButton {
-    public override init(frame: CGRect) {
-        super.init(frame: frame)
-        setTitle("All", for: .normal)
-        setTitleColor(AppColor.highEmphasis, for: .normal)
-        titleLabel?.font = AppFont.labelLG()
-        backgroundColor = AppColor.primaryContainer
-        layer.cornerRadius = 18
-        contentEdgeInsets = UIEdgeInsets(top: 8, left: 20, bottom: 8, right: 20)
-    }
-
-    required init?(coder: NSCoder) { fatalError() }
 }

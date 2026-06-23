@@ -1,17 +1,24 @@
 import Foundation
+import Combine
+import UIKit
 import NetworkKit
 import UIComponentKit
 
-public final class ReviewsPresenter: ReviewsPresenting {
-    public weak var view: ReviewsView?
+public final class ReviewsPresenter: ObservableObject, ReviewsPresenting {
+    @Published public private(set) var viewModel = ReviewsViewModel(
+        movieTitle: "",
+        moviePosterURL: nil,
+        ratingText: "",
+        reviewCountText: "",
+        reviews: [],
+        isLoadingMore: false
+    )
+    @Published public var alertMessage: String?
 
     private let interactor: ReviewsInteracting
     private let movieId: Int
+    private weak var viewController: UIViewController?
     private var reviews: [Review] = []
-    private var movieTitle = ""
-    private var moviePosterURL: URL?
-    private var ratingText = ""
-    private var reviewCountText = ""
     private var isLoadingMore = false
 
     public init(movieId: Int, interactor: ReviewsInteracting) {
@@ -19,16 +26,21 @@ public final class ReviewsPresenter: ReviewsPresenting {
         self.interactor = interactor
     }
 
-    public func viewDidLoad() {
+    public func attach(viewController: UIViewController) {
+        self.viewController = viewController
+    }
+
+    public func viewDidAppear() {
         Task {
             do {
                 let payload = try await interactor.fetchInitial(movieId: movieId)
-                movieTitle = payload.movie.title
-                moviePosterURL = TMDBImageURL.poster(path: payload.movie.posterPath)
-                ratingText = String(format: "%.1f", payload.movie.voteAverage)
-                reviewCountText = "(\(payload.reviews.results.count)+)"
                 reviews = payload.reviews.results
-                await presentViewModel(makeViewModel())
+                await updateViewModel(
+                    movieTitle: payload.movie.title,
+                    moviePosterURL: TMDBImageURL.poster(path: payload.movie.posterPath),
+                    ratingText: String(format: "%.1f", payload.movie.voteAverage),
+                    reviewCountText: "(\(payload.reviews.results.count)+)"
+                )
             } catch {
                 await presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load reviews.")
             }
@@ -39,49 +51,57 @@ public final class ReviewsPresenter: ReviewsPresenting {
         guard !isLoadingMore, !interactor.hasReachedEnd else { return }
         isLoadingMore = true
         Task {
-            await presentLoadingFooter(true)
+            await setLoadingMore(true)
             do {
                 let more = try await interactor.fetchNextPage(movieId: movieId)
                 reviews.append(contentsOf: more)
                 isLoadingMore = false
-                await appendReviews(more.map(mapReview))
-                await presentLoadingFooter(false)
+                await updateViewModel()
+                await setLoadingMore(false)
             } catch {
                 isLoadingMore = false
-                await presentLoadingFooter(false)
+                await setLoadingMore(false)
             }
         }
     }
 
+    public func didTapBack() {
+        viewController?.navigationController?.popViewController(animated: true)
+    }
+
     @MainActor
-    private func presentViewModel(_ viewModel: ReviewsViewModel) {
-        view?.show(viewModel: viewModel)
+    private func updateViewModel(
+        movieTitle: String? = nil,
+        moviePosterURL: URL? = nil,
+        ratingText: String? = nil,
+        reviewCountText: String? = nil
+    ) {
+        viewModel = ReviewsViewModel(
+            movieTitle: movieTitle ?? viewModel.movieTitle,
+            moviePosterURL: moviePosterURL ?? viewModel.moviePosterURL,
+            ratingText: ratingText ?? viewModel.ratingText,
+            reviewCountText: reviewCountText ?? viewModel.reviewCountText,
+            reviews: reviews.map(mapReview),
+            isLoadingMore: isLoadingMore
+        )
+    }
+
+    @MainActor
+    private func setLoadingMore(_ loading: Bool) {
+        isLoadingMore = loading
+        viewModel = ReviewsViewModel(
+            movieTitle: viewModel.movieTitle,
+            moviePosterURL: viewModel.moviePosterURL,
+            ratingText: viewModel.ratingText,
+            reviewCountText: viewModel.reviewCountText,
+            reviews: viewModel.reviews,
+            isLoadingMore: loading
+        )
     }
 
     @MainActor
     private func presentError(_ message: String) {
-        view?.show(errorMessage: message)
-    }
-
-    @MainActor
-    private func appendReviews(_ items: [ReviewsViewModel.ReviewItem]) {
-        view?.appendReviews(items)
-    }
-
-    @MainActor
-    private func presentLoadingFooter(_ visible: Bool) {
-        view?.showLoadingFooter(visible)
-    }
-
-    private func makeViewModel() -> ReviewsViewModel {
-        ReviewsViewModel(
-            movieTitle: movieTitle,
-            moviePosterURL: moviePosterURL,
-            ratingText: ratingText,
-            reviewCountText: reviewCountText,
-            reviews: reviews.map(mapReview),
-            isLoadingMore: isLoadingMore
-        )
+        alertMessage = message
     }
 
     private func mapReview(_ review: Review) -> ReviewsViewModel.ReviewItem {

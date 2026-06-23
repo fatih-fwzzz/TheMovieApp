@@ -23,6 +23,10 @@ public final class MovieDetailInteractor: MovieDetailInteracting {
         try await movieService.fetchCredits(movieId: movieId)
     }
 
+    public func fetchReviews(movieId: Int) async throws -> PaginatedReviewsResponse {
+        try await movieService.fetchReviews(movieId: movieId, page: 1)
+    }
+
     public func isFavorite(movieId: Int) -> Bool {
         favoritesStore.isFavorite(movieId: movieId)
     }

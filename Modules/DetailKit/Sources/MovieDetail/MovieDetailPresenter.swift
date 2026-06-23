@@ -1,11 +1,17 @@
 import Foundation
-import Combine
 import UIKit
 import NetworkKit
 import UIComponentKit
 
-public final class MovieDetailPresenter: ObservableObject, MovieDetailPresenting {
-    @Published public private(set) var viewModel = MovieDetailViewModel(
+public final class MovieDetailPresenter: MovieDetailPresenting {
+    public weak var view: MovieDetailView?
+
+    private let interactor: MovieDetailInteracting
+    private let router: MovieDetailRouting
+    private let movieId: Int
+    private weak var viewController: UIViewController?
+    private var loadedDetail: MovieDetail?
+    private var viewModel = MovieDetailViewModel(
         title: "",
         overview: "",
         ratingText: "",
@@ -16,17 +22,12 @@ public final class MovieDetailPresenter: ObservableObject, MovieDetailPresenting
         posterURL: nil,
         trailerURL: nil,
         cast: [],
+        previewReviews: [],
         isOverviewExpanded: false,
         isLoading: true,
         isFavorite: false,
         errorMessage: nil
     )
-
-    private let interactor: MovieDetailInteracting
-    private let router: MovieDetailRouting
-    private let movieId: Int
-    private weak var viewController: UIViewController?
-    private var loadedDetail: MovieDetail?
 
     public init(movieId: Int, interactor: MovieDetailInteracting, router: MovieDetailRouting) {
         self.movieId = movieId
@@ -59,21 +60,25 @@ public final class MovieDetailPresenter: ObservableObject, MovieDetailPresenting
 
     public func didToggleOverviewExpanded() {
         viewModel = updatedViewModel(isOverviewExpanded: !viewModel.isOverviewExpanded)
+        Task { await presentViewModel() }
     }
 
     public func didTapFavorite() {
         guard let loadedDetail else { return }
         interactor.toggleFavorite(loadedDetail)
         viewModel = updatedViewModel(isFavorite: interactor.isFavorite(movieId: movieId))
+        Task { await presentViewModel() }
     }
 
     private func load() async {
         viewModel = updatedViewModel(isLoading: true)
+        await presentViewModel()
         do {
             async let detail = interactor.fetchDetail(movieId: movieId)
             async let trailer = interactor.fetchTrailer(movieId: movieId)
             async let cast = interactor.fetchCast(movieId: movieId)
-            let (movie, trailerURL, castMembers) = try await (detail, trailer, cast)
+            async let reviews = interactor.fetchReviews(movieId: movieId)
+            let (movie, trailerURL, castMembers, reviewsResponse) = try await (detail, trailer, cast, reviews)
             loadedDetail = movie
             let year = movie.releaseDate.map { String($0.prefix(4)) } ?? "—"
             viewModel = MovieDetailViewModel(
@@ -93,17 +98,31 @@ public final class MovieDetailPresenter: ObservableObject, MovieDetailPresenting
                         imageURL: TMDBImageURL.profile(path: $0.profilePath)
                     )
                 },
+                previewReviews: reviewsResponse.results.prefix(2).map(mapReview),
                 isOverviewExpanded: false,
                 isLoading: false,
                 isFavorite: interactor.isFavorite(movieId: movieId),
                 errorMessage: nil
             )
+            await presentViewModel()
         } catch {
             viewModel = updatedViewModel(
                 isLoading: false,
                 errorMessage: (error as? LocalizedError)?.errorDescription ?? "Failed to load movie."
             )
+            await presentViewModel()
+            await presentError(viewModel.errorMessage ?? "Failed to load movie.")
         }
+    }
+
+    @MainActor
+    private func presentViewModel() {
+        view?.show(viewModel: viewModel)
+    }
+
+    @MainActor
+    private func presentError(_ message: String) {
+        view?.show(errorMessage: message)
     }
 
     private func updatedViewModel(
@@ -123,10 +142,30 @@ public final class MovieDetailPresenter: ObservableObject, MovieDetailPresenting
             posterURL: viewModel.posterURL,
             trailerURL: viewModel.trailerURL,
             cast: viewModel.cast,
+            previewReviews: viewModel.previewReviews,
             isOverviewExpanded: isOverviewExpanded ?? viewModel.isOverviewExpanded,
             isLoading: isLoading ?? viewModel.isLoading,
             isFavorite: isFavorite ?? viewModel.isFavorite,
             errorMessage: errorMessage ?? viewModel.errorMessage
         )
+    }
+
+    private func mapReview(_ review: Review) -> MovieDetailViewModel.ReviewItem {
+        MovieDetailViewModel.ReviewItem(
+            id: "\(review.author)-\(review.createdAt)",
+            author: review.author,
+            content: review.displayContent,
+            dateText: formatDate(review.createdAt),
+            ratingText: review.rating.map { String(format: "%.1f", $0) } ?? "—",
+            avatarURL: TMDBImageURL.profile(path: review.authorDetails?.avatarPath, size: "w45")
+        )
+    }
+
+    private func formatDate(_ iso: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        guard let date = formatter.date(from: iso) else { return iso }
+        let rel = RelativeDateTimeFormatter()
+        rel.unitsStyle = .short
+        return rel.localizedString(for: date, relativeTo: Date())
     }
 }

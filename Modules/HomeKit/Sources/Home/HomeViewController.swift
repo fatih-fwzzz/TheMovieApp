@@ -11,7 +11,6 @@ public final class HomeViewController: UIViewController, HomeView {
     private let contentStack = UIStackView()
 
     private let logoLabel = UILabel()
-    private let allPill = AllFilterPillButton()
     private let heroCollectionView: UICollectionView
     private let heroTitleLabel = UILabel()
     private let watchTrailerButton = PrimaryButton()
@@ -24,6 +23,11 @@ public final class HomeViewController: UIViewController, HomeView {
     private let moviesCollectionView: UICollectionView
     private let loadingFooter = UIActivityIndicatorView(style: .medium)
     private var moviesCollectionHeightConstraint: NSLayoutConstraint?
+    private var heroAutoSlideTimer: Timer?
+    private var isUserScrollingHero = false
+    private var isProgrammaticHeroScroll = false
+    private var pendingHeroIndex: Int?
+    private var lastHeroItemIDs: [Int] = []
 
     private let heroLayout: UICollectionViewFlowLayout = {
         let layout = UICollectionViewFlowLayout()
@@ -64,10 +68,21 @@ public final class HomeViewController: UIViewController, HomeView {
         presenter.viewDidLoad()
     }
 
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        startHeroAutoSlide()
+    }
+
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        stopHeroAutoSlide()
+    }
+
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let width = view.bounds.width - AppSpacing.containerMargin * 2
-        heroLayout.itemSize = CGSize(width: view.bounds.width, height: 280)
+        let heroWidth = max(heroCollectionView.bounds.width, width)
+        heroLayout.itemSize = CGSize(width: heroWidth, height: 280)
         topTenLayout.itemSize = CGSize(width: width / 3.2, height: 180)
         let colWidth = (width - AppSpacing.gutter) / 2
         moviesLayout.itemSize = CGSize(width: colWidth, height: colWidth * 1.55)
@@ -75,21 +90,29 @@ public final class HomeViewController: UIViewController, HomeView {
     }
 
     public func show(viewModel: HomeViewModel) {
+        let heroIDs = viewModel.heroItems.map(\.movieId)
+        let heroDataChanged = heroIDs != lastHeroItemIDs
+        lastHeroItemIDs = heroIDs
+
         self.viewModel = viewModel
-        heroCollectionView.reloadData()
+
+        if heroDataChanged {
+            heroCollectionView.reloadData()
+            heroCollectionView.layoutIfNeeded()
+            scrollHeroToIndex(viewModel.heroIndex, animated: false)
+        } else if currentHeroPage() != viewModel.heroIndex,
+                  !isUserScrollingHero,
+                  !isProgrammaticHeroScroll {
+            scrollHeroToIndex(viewModel.heroIndex, animated: false)
+        }
+
         topTenCollectionView.reloadData()
         moviesCollectionView.reloadData()
         rebuildChips(viewModel.genreChips)
         pageControl.numberOfPages = viewModel.heroItems.count
-        pageControl.currentPage = viewModel.heroIndex
-        if viewModel.heroItems.indices.contains(viewModel.heroIndex) {
-            let hero = viewModel.heroItems[viewModel.heroIndex]
-            heroTitleLabel.text = hero.title
-            watchTrailerButton.isHidden = !hero.hasTrailer
-        }
+        updateHeroOverlay(from: viewModel)
         loadingFooter.isHidden = !viewModel.isLoadingMore
         if viewModel.isLoadingMore { loadingFooter.startAnimating() } else { loadingFooter.stopAnimating() }
-        allPill.alpha = viewModel.isAllFilterActive ? 1 : 0.6
         updateMoviesCollectionHeight()
     }
 
@@ -107,7 +130,6 @@ public final class HomeViewController: UIViewController, HomeView {
             topTen: model.topTen,
             movies: model.movies + items,
             genreChips: model.genreChips,
-            isAllFilterActive: model.isAllFilterActive,
             isLoadingMore: false
         )
         viewModel = model
@@ -127,10 +149,8 @@ public final class HomeViewController: UIViewController, HomeView {
         contentStack.translatesAutoresizingMaskIntoConstraints = false
 
         logoLabel.text = "TheMovie"
-        logoLabel.font = AppFont.labelLG()
-        logoLabel.textColor = AppColor.primary
-
-        allPill.addTarget(self, action: #selector(allTapped), for: .touchUpInside)
+        logoLabel.font = AppFont.headlineXL()
+        logoLabel.textColor = AppColor.highEmphasis
 
         heroCollectionView.backgroundColor = .clear
         heroCollectionView.isPagingEnabled = true
@@ -194,10 +214,9 @@ public final class HomeViewController: UIViewController, HomeView {
 
         loadingFooter.color = AppColor.onSurfaceVariant
 
-        let headerStack = UIStackView(arrangedSubviews: [logoLabel, allPill])
+        let headerStack = UIStackView(arrangedSubviews: [logoLabel])
         headerStack.axis = .vertical
         headerStack.alignment = .leading
-        headerStack.spacing = AppSpacing.stackMD
 
         let heroOverlay = UIStackView(arrangedSubviews: [heroTitleLabel, watchTrailerButton, trendingLabel, pageControl])
         heroOverlay.axis = .vertical
@@ -257,9 +276,11 @@ public final class HomeViewController: UIViewController, HomeView {
         }
     }
 
-    @objc private func allTapped() { presenter.didTapAllFilter() }
     @objc private func trailerTapped() { presenter.didTapWatchTrailer() }
-    @objc private func pageChanged() { presenter.didSelectHeroPage(pageControl.currentPage) }
+    @objc private func pageChanged() {
+        let page = pageControl.currentPage
+        scrollHeroToIndex(page, animated: true)
+    }
     @objc private func chipTapped(_ sender: UIButton) { presenter.didSelectGenreChip(at: sender.tag) }
     @objc private func refreshPulled() {
         presenter.refreshMovies()
@@ -278,6 +299,70 @@ public final class HomeViewController: UIViewController, HomeView {
         let spacing = moviesLayout.minimumLineSpacing
         let height = rows * itemHeight + max(0, rows - 1) * spacing
         moviesCollectionHeightConstraint?.constant = height
+    }
+
+    private func startHeroAutoSlide() {
+        stopHeroAutoSlide()
+        heroAutoSlideTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            self?.advanceHeroCarousel()
+        }
+    }
+
+    private func stopHeroAutoSlide() {
+        heroAutoSlideTimer?.invalidate()
+        heroAutoSlideTimer = nil
+    }
+
+    private func advanceHeroCarousel() {
+        guard !isUserScrollingHero,
+              !isProgrammaticHeroScroll,
+              let viewModel,
+              !viewModel.heroItems.isEmpty else { return }
+        let nextIndex = (viewModel.heroIndex + 1) % viewModel.heroItems.count
+        scrollHeroToIndex(nextIndex, animated: true)
+    }
+
+    private func currentHeroPage() -> Int {
+        let pageWidth = max(heroCollectionView.bounds.width, 1)
+        return Int(round(heroCollectionView.contentOffset.x / pageWidth))
+    }
+
+    private func scrollHeroToIndex(_ index: Int, animated: Bool) {
+        guard viewModel?.heroItems.indices.contains(index) == true else { return }
+        let pageWidth = max(heroCollectionView.bounds.width, 1)
+        let targetOffset = CGPoint(x: CGFloat(index) * pageWidth, y: 0)
+
+        if animated {
+            isProgrammaticHeroScroll = true
+            pendingHeroIndex = index
+            heroCollectionView.setContentOffset(targetOffset, animated: true)
+        } else {
+            heroCollectionView.setContentOffset(targetOffset, animated: false)
+        }
+    }
+
+    private func finishProgrammaticHeroScrollIfNeeded() {
+        guard isProgrammaticHeroScroll, let index = pendingHeroIndex, let viewModel else { return }
+        isProgrammaticHeroScroll = false
+        pendingHeroIndex = nil
+        updateHeroOverlay(index: index, from: viewModel)
+        if viewModel.heroIndex != index {
+            presenter.didSelectHeroPage(index)
+        }
+    }
+
+    private func updateHeroOverlay(from viewModel: HomeViewModel) {
+        updateHeroOverlay(index: viewModel.heroIndex, from: viewModel)
+    }
+
+    private func updateHeroOverlay(index: Int, from viewModel: HomeViewModel) {
+        pageControl.currentPage = index
+        guard viewModel.heroItems.indices.contains(index) else { return }
+        let hero = viewModel.heroItems[index]
+        UIView.transition(with: heroTitleLabel, duration: 0.3, options: .transitionCrossDissolve) {
+            self.heroTitleLabel.text = hero.title
+        }
+        watchTrailerButton.isHidden = !hero.hasTrailer
     }
 }
 
@@ -309,21 +394,54 @@ extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelega
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if collectionView === moviesCollectionView {
             presenter.didTapMovie(at: indexPath.item)
+        } else if collectionView === topTenCollectionView {
+            presenter.didTapTopTen(at: indexPath.item)
         }
     }
 
-    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+    public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         if scrollView === heroCollectionView {
-            let page = Int(scrollView.contentOffset.x / max(scrollView.bounds.width, 1))
-            presenter.didSelectHeroPage(page)
+            isUserScrollingHero = true
         }
     }
 
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if scrollView === heroCollectionView, isProgrammaticHeroScroll || isUserScrollingHero {
+            pageControl.currentPage = currentHeroPage()
+            return
+        }
+
         guard scrollView === self.scrollView else { return }
         let offset = scrollView.contentOffset.y + scrollView.bounds.height
         if offset > scrollView.contentSize.height - 200 {
             presenter.viewDidScrollNearBottom()
+        }
+    }
+
+    public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        guard scrollView === heroCollectionView else { return }
+        finishProgrammaticHeroScrollIfNeeded()
+    }
+
+    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        if scrollView === heroCollectionView {
+            let page = currentHeroPage()
+            if let viewModel {
+                updateHeroOverlay(index: page, from: viewModel)
+            }
+            presenter.didSelectHeroPage(page)
+            isUserScrollingHero = false
+        }
+    }
+
+    public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        if scrollView === heroCollectionView, !decelerate {
+            let page = currentHeroPage()
+            if let viewModel {
+                updateHeroOverlay(index: page, from: viewModel)
+            }
+            presenter.didSelectHeroPage(page)
+            isUserScrollingHero = false
         }
     }
 }

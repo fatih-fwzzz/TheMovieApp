@@ -1,16 +1,9 @@
-import UIKit
 import NetworkKit
 
-public protocol ReviewsView: AnyObject {
-    func show(viewModel: ReviewsViewModel)
-    func show(errorMessage: String)
-    func appendReviews(_ items: [ReviewsViewModel.ReviewItem])
-    func showLoadingFooter(_ visible: Bool)
-}
-
 public protocol ReviewsPresenting: AnyObject {
-    func viewDidLoad()
+    func viewDidAppear()
     func viewDidScrollNearBottom()
+    func didTapBack()
 }
 
 public protocol ReviewsInteracting: AnyObject {
@@ -25,7 +18,8 @@ public struct ReviewsInteractorPayload {
 }
 
 public struct ReviewsViewModel {
-    public struct ReviewItem {
+    public struct ReviewItem: Identifiable {
+        public var id: String { "\(author)-\(dateText)" }
         public let author: String
         public let content: String
         public let dateText: String

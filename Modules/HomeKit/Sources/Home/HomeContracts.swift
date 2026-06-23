@@ -14,7 +14,7 @@ public protocol HomePresenting: AnyObject {
     func didSelectHeroPage(_ index: Int)
     func didTapWatchTrailer()
     func didTapMovie(at index: Int)
-    func didTapAllFilter()
+    func didTapTopTen(at index: Int)
     func didSelectGenreChip(at index: Int)
     func refreshMovies()
 }
@@ -59,7 +59,6 @@ public struct HomeViewModel {
     public let topTen: [MovieItem]
     public let movies: [MovieItem]
     public let genreChips: [GenreChipItem]
-    public let isAllFilterActive: Bool
     public let isLoadingMore: Bool
 }
 
