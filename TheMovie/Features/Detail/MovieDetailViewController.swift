@@ -122,7 +122,7 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
             UIColor.black.withAlphaComponent(0.15).cgColor,
             AppColor.background.cgColor
         ]
-        backdropGradient.locations = [0, 1]
+        backdropGradient.locations = [0, 2.5]
         backdropImageView.layer.addSublayer(backdropGradient)
 
         heroContainer.translatesAutoresizingMaskIntoConstraints = false
