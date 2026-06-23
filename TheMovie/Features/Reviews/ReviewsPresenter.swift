@@ -33,14 +33,18 @@ public final class ReviewsPresenter: ObservableObject, ReviewsPresenting {
             do {
                 let payload = try await interactor.fetchInitial(movieId: movieId)
                 reviews = payload.reviews.results
-                await updateViewModel(
-                    movieTitle: payload.movie.title,
-                    moviePosterURL: TMDBImageURL.poster(path: payload.movie.posterPath),
-                    ratingText: String(format: "%.1f", payload.movie.voteAverage),
-                    reviewCountText: "(\(payload.reviews.results.count)+)"
-                )
+                await MainActor.run {
+                    updateViewModel(
+                        movieTitle: payload.movie.title,
+                        moviePosterURL: TMDBImageURL.poster(path: payload.movie.posterPath),
+                        ratingText: String(format: "%.1f", payload.movie.voteAverage),
+                        reviewCountText: "(\(payload.reviews.results.count)+)"
+                    )
+                }
             } catch {
-                await presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load reviews.")
+                await MainActor.run {
+                    presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load reviews.")
+                }
             }
         }
     }
@@ -49,16 +53,18 @@ public final class ReviewsPresenter: ObservableObject, ReviewsPresenting {
         guard !isLoadingMore, !interactor.hasReachedEnd else { return }
         isLoadingMore = true
         Task {
-            await setLoadingMore(true)
+            await MainActor.run { setLoadingMore(true) }
             do {
                 let more = try await interactor.fetchNextPage(movieId: movieId)
                 reviews.append(contentsOf: more)
                 isLoadingMore = false
-                await updateViewModel()
-                await setLoadingMore(false)
+                await MainActor.run {
+                    updateViewModel()
+                    setLoadingMore(false)
+                }
             } catch {
                 isLoadingMore = false
-                await setLoadingMore(false)
+                await MainActor.run { setLoadingMore(false) }
             }
         }
     }

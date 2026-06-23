@@ -31,25 +31,31 @@ public final class HomePresenter: HomePresenting {
         guard !isLoadingMore else { return }
         isLoadingMore = true
         Task {
-            await presentViewModel()
-            await presentGridLoadingFooter(true)
+            await MainActor.run {
+                presentViewModel()
+                presentGridLoadingFooter(true)
+            }
             do {
                 let more = try await interactor.loadMoreMovies()
                 movies.append(contentsOf: more)
                 isLoadingMore = false
-                await appendMovies(more.map(mapMovie))
-                await presentGridLoadingFooter(false)
+                await MainActor.run {
+                    appendMovies(more.map(mapMovie))
+                    presentGridLoadingFooter(false)
+                }
             } catch {
                 isLoadingMore = false
-                await presentGridLoadingFooter(false)
-                await presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load more.")
+                await MainActor.run {
+                    presentGridLoadingFooter(false)
+                    presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load more.")
+                }
             }
         }
     }
 
     public func didSelectHeroPage(_ index: Int) {
         heroIndex = index
-        Task { await presentViewModel() }
+        Task { @MainActor in presentViewModel() }
     }
 
     public func didTapWatchTrailer() {
@@ -59,12 +65,18 @@ public final class HomePresenter: HomePresenting {
         Task {
             do {
                 if let url = try await interactor.trailerURL(for: movie.id) {
-                    await presentTrailer(url: url, from: viewController)
+                    await MainActor.run {
+                        presentTrailer(url: url, from: viewController)
+                    }
                 } else {
-                    await presentError("Trailer not available for this movie.")
+                    await MainActor.run {
+                        presentError("Trailer not available for this movie.")
+                    }
                 }
             } catch {
-                await presentError((error as? LocalizedError)?.errorDescription ?? "Trailer unavailable.")
+                await MainActor.run {
+                    presentError((error as? LocalizedError)?.errorDescription ?? "Trailer unavailable.")
+                }
             }
         }
     }
@@ -104,9 +116,11 @@ public final class HomePresenter: HomePresenting {
                 let result = try await interactor.loadInitialData()
                 movies = result.movies.results
                 genres = result.genres
-                await presentViewModel()
+                await MainActor.run { presentViewModel() }
             } catch {
-                await presentError((error as? LocalizedError)?.errorDescription ?? "Failed to filter movies.")
+                await MainActor.run {
+                    presentError((error as? LocalizedError)?.errorDescription ?? "Failed to filter movies.")
+                }
             }
         }
     }
@@ -118,9 +132,11 @@ public final class HomePresenter: HomePresenting {
             genres = result.genres
             movies = result.movies.results
             selectedGenreId = result.selectedGenreId
-            await presentViewModel()
+            await MainActor.run { presentViewModel() }
         } catch {
-            await presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load home.")
+            await MainActor.run {
+                presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load home.")
+            }
         }
     }
 

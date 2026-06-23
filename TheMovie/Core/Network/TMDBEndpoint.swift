@@ -1,6 +1,6 @@
 import Foundation
 
-public enum TMDBEndpoint {
+public enum TMDBEndpoint: Sendable {
     case genreList
     case discoverMovies(genreId: Int?, page: Int)
     case trendingWeek
@@ -10,9 +10,9 @@ public enum TMDBEndpoint {
     case movieVideos(id: Int)
     case movieCredits(id: Int)
 
-    private static let baseURL = "https://api.themoviedb.org/3"
+    nonisolated private static let baseURL = "https://api.themoviedb.org/3"
 
-    public var path: String {
+    nonisolated public var path: String {
         switch self {
         case .genreList:
             return "/genre/movie/list"
@@ -33,7 +33,7 @@ public enum TMDBEndpoint {
         }
     }
 
-    public var queryItems: [URLQueryItem] {
+    nonisolated public var queryItems: [URLQueryItem] {
         switch self {
         case .genreList:
             return [URLQueryItem(name: "language", value: "en-US")]
@@ -65,7 +65,7 @@ public enum TMDBEndpoint {
         }
     }
 
-    public var url: URL? {
+    nonisolated public var url: URL? {
         guard var components = URLComponents(string: Self.baseURL + path) else { return nil }
         components.queryItems = queryItems
         return components.url

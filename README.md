@@ -4,6 +4,7 @@ A cinematic iOS movie discovery app built with **UIKit**, **SwiftUI**, and **VIP
 
 <p align="center">
   <img src="docs/screenshots/home.png" alt="Home screen" width="200" />
+  <img src="docs/screenshots/search_2.png" alt="Search screen with Empty search" width="200" />
   <img src="docs/screenshots/search.png" alt="Search screen" width="200" />
   <img src="docs/screenshots/detail.png" alt="Movie detail screen" width="200" />
   <img src="docs/screenshots/review.png" alt="Movie review screen" width="200" />
@@ -172,7 +173,3 @@ Cross-feature navigation is handled by `AppNavigation` in the app layer — feat
 | Sandbox script error      | Already handled in Podfile `post_install` — re-run `pod install` |
 
 ---
-
-## License
-
-This project is for educational and portfolio use. TMDB data and images are provided by [The Movie Database](https://www.themoviedb.org/) and subject to their [terms of use](https://www.themoviedb.org/documentation/api/terms-of-use).

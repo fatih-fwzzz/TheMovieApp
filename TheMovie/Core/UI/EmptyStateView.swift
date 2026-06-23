@@ -18,9 +18,9 @@ public final class EmptyStateView: UIView {
         messageLabel.numberOfLines = 0
 
         actionButton.setTitleColor(AppColor.onSurfaceVariant, for: .normal)
-        actionButton.titleLabel?.font = AppFont.labelLG()
+        UIButtonInsets.applyTitleFont(AppFont.labelLG(), to: actionButton)
         actionButton.layer.cornerRadius = AppRadius.rounded
-        actionButton.contentEdgeInsets = UIEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
+        UIButtonInsets.apply(UIEdgeInsets(top: 12, left: 20, bottom: 12, right: 20), to: actionButton)
         LiquidGlassStyle.apply(to: actionButton, cornerRadius: AppRadius.rounded, tintColor: AppColor.surface)
 
         addSubview(stack)

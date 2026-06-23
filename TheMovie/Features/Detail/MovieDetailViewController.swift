@@ -19,31 +19,31 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
     private let runtimeLabel = UILabel()
     private let genreScrollView = UIScrollView()
     private let genreStack = UIStackView()
-    private let overviewTitleLabel = UILabel()
     private let overviewLabel = UILabel()
     private let readMoreButton = UIButton(type: .system)
     private let trailerButton = PrimaryButton()
     private let castTitleLabel = UILabel()
+    private let castSeeAllButton = UIButton(type: .system)
     private let castCollectionView: UICollectionView
     private let reviewsTitleLabel = UILabel()
     private let reviewsStack = UIStackView()
-    private let showAllReviewsButton = UIButton(type: .system)
     private let reviewsEmptyLabel = UILabel()
+    private let showAllReviewsButton = UIButton(type: .system)
     private let loadingIndicator = UIActivityIndicatorView(style: .large)
 
     private let castLayout: UICollectionViewFlowLayout = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
         layout.minimumLineSpacing = AppSpacing.gutter
-        layout.itemSize = CGSize(width: 80, height: 110)
+        layout.itemSize = CGSize(width: 96, height: 140)
         return layout
     }()
 
     private enum Layout {
-        static let backdropHeight: CGFloat = 260
+        static let backdropHeight: CGFloat = 320
         static let posterWidth: CGFloat = 110
         static let posterHeight: CGFloat = 165
-        static let posterOverlap: CGFloat = 48
+        static let posterOverlap: CGFloat = 56
     }
 
     public init(presenter: MovieDetailPresenting) {
@@ -83,8 +83,8 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
         yearLabel.text = viewModel.year
         runtimeLabel.text = viewModel.runtimeText
         overviewLabel.text = viewModel.overview
-        overviewLabel.numberOfLines = viewModel.isOverviewExpanded ? 0 : 3
-        readMoreButton.isHidden = viewModel.overview.count <= 120
+        overviewLabel.numberOfLines = viewModel.isOverviewExpanded ? 0 : 4
+        readMoreButton.isHidden = viewModel.overview.count <= 160
         readMoreButton.setTitle(viewModel.isOverviewExpanded ? "Show less" : "Read more", for: .normal)
         trailerButton.isHidden = viewModel.trailerURL == nil
         favoriteButton.setImage(
@@ -93,11 +93,12 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
         )
         favoriteButton.tintColor = viewModel.isFavorite ? AppColor.primary : .white
         favoriteButton.isEnabled = !viewModel.isLoading
-        
+
         backButton.tintColor = AppColor.primary
 
         rebuildGenres(viewModel.genres)
         castCollectionView.reloadData()
+        castSeeAllButton.isHidden = viewModel.cast.isEmpty
         rebuildReviews(viewModel.previewReviews)
     }
 
@@ -143,35 +144,33 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
         posterImageView.layer.borderColor = UIColor.white.withAlphaComponent(0.12).cgColor
         posterImageView.translatesAutoresizingMaskIntoConstraints = false
 
-        titleLabel.font = .systemFont(ofSize: 22, weight: .bold)
+        titleLabel.font = .systemFont(ofSize: 28, weight: .bold)
         titleLabel.textColor = AppColor.highEmphasis
         titleLabel.numberOfLines = 0
 
-        ratingLabel.font = .systemFont(ofSize: 14, weight: .semibold)
-        ratingLabel.textColor = AppColor.ratingGold
-        yearLabel.font = AppFont.labelSM()
+        ratingLabel.font = .systemFont(ofSize: 15, weight: .semibold)
+        ratingLabel.textColor = AppColor.highEmphasis
+
+        yearLabel.font = .systemFont(ofSize: 14, weight: .medium)
         yearLabel.textColor = AppColor.onSurfaceVariant
-        runtimeLabel.font = AppFont.labelSM()
+        runtimeLabel.font = .systemFont(ofSize: 14, weight: .medium)
         runtimeLabel.textColor = AppColor.onSurfaceVariant
 
         let star = UIImageView(image: UIImage(systemName: "star.fill"))
         star.tintColor = AppColor.ratingGold
         star.translatesAutoresizingMaskIntoConstraints = false
-        star.widthAnchor.constraint(equalToConstant: 12).isActive = true
-        star.heightAnchor.constraint(equalToConstant: 12).isActive = true
+        star.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        star.heightAnchor.constraint(equalToConstant: 14).isActive = true
 
-        let dot = UILabel()
-        dot.text = "·"
-        dot.textColor = AppColor.onSurfaceVariant
-
-        let ratingRow = UIStackView(arrangedSubviews: [star, ratingLabel, dot, yearLabel])
+        let ratingRow = UIStackView(arrangedSubviews: [star, ratingLabel, yearLabel])
         ratingRow.spacing = 6
         ratingRow.alignment = .center
 
         let clock = UIImageView(image: UIImage(systemName: "clock"))
         clock.tintColor = AppColor.onSurfaceVariant
         clock.translatesAutoresizingMaskIntoConstraints = false
-        clock.widthAnchor.constraint(equalToConstant: 12).isActive = true
+        clock.widthAnchor.constraint(equalToConstant: 13).isActive = true
+        clock.heightAnchor.constraint(equalToConstant: 13).isActive = true
         let runtimeRow = UIStackView(arrangedSubviews: [clock, runtimeLabel])
         runtimeRow.spacing = 4
         runtimeRow.alignment = .center
@@ -193,29 +192,35 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
         genreStack.translatesAutoresizingMaskIntoConstraints = false
         genreScrollView.addSubview(genreStack)
 
-        overviewTitleLabel.text = "Overview"
-        overviewTitleLabel.font = AppFont.headlineMD()
-        overviewTitleLabel.textColor = AppColor.highEmphasis
         overviewLabel.font = AppFont.bodyLG()
         overviewLabel.textColor = AppColor.onSurfaceVariant
-        overviewLabel.numberOfLines = 3
+        overviewLabel.numberOfLines = 4
         readMoreButton.setTitleColor(AppColor.primary, for: .normal)
         readMoreButton.titleLabel?.font = AppFont.labelLG()
         readMoreButton.addTarget(self, action: #selector(readMoreTapped), for: .touchUpInside)
 
-        trailerButton.setTitle("Watch Trailer", for: .normal)
-        trailerButton.addTarget(self, action: #selector(trailerTapped), for: .touchUpInside)
+        configureTrailerButton()
 
         castTitleLabel.text = "Top Cast"
         castTitleLabel.font = AppFont.headlineMD()
         castTitleLabel.textColor = AppColor.highEmphasis
+
+        castSeeAllButton.setTitle("See All", for: .normal)
+        castSeeAllButton.setTitleColor(AppColor.primary, for: .normal)
+        castSeeAllButton.titleLabel?.font = AppFont.labelLG()
+
+        let castHeaderRow = UIStackView(arrangedSubviews: [castTitleLabel, UIView()])
+        castHeaderRow.axis = .horizontal
+        castHeaderRow.alignment = .center
+        castHeaderRow.distribution = .fill
+
         castCollectionView.backgroundColor = .clear
         castCollectionView.showsHorizontalScrollIndicator = false
         castCollectionView.dataSource = self
         castCollectionView.delegate = self
         castCollectionView.register(CastCell.self, forCellWithReuseIdentifier: CastCell.id)
         castCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        castCollectionView.heightAnchor.constraint(equalToConstant: 110).isActive = true
+        castCollectionView.heightAnchor.constraint(equalToConstant: 140).isActive = true
 
         reviewsTitleLabel.text = "User Reviews"
         reviewsTitleLabel.font = AppFont.headlineMD()
@@ -226,32 +231,35 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
         reviewsEmptyLabel.font = AppFont.bodyLG()
         reviewsEmptyLabel.textColor = AppColor.onSurfaceVariant
         reviewsEmptyLabel.isHidden = true
-        showAllReviewsButton.setTitle("Show all", for: .normal)
-        showAllReviewsButton.setTitleColor(AppColor.primary, for: .normal)
-        showAllReviewsButton.titleLabel?.font = AppFont.labelLG()
-        showAllReviewsButton.layer.cornerRadius = AppRadius.roundedLG
-        showAllReviewsButton.contentEdgeInsets = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
-        LiquidGlassStyle.apply(to: showAllReviewsButton, cornerRadius: AppRadius.roundedLG, tintColor: AppColor.surfaceContainer)
-        showAllReviewsButton.addTarget(self, action: #selector(showAllReviewsTapped), for: .touchUpInside)
-        showAllReviewsButton.isHidden = true
 
-        let overviewStack = UIStackView(arrangedSubviews: [overviewTitleLabel, overviewLabel, readMoreButton])
+        configureShowAllReviewsButton()
+
+        let overviewStack = UIStackView(arrangedSubviews: [overviewLabel, readMoreButton])
         overviewStack.axis = .vertical
         overviewStack.spacing = AppSpacing.stackSM
         overviewStack.alignment = .leading
 
-        let castStack = UIStackView(arrangedSubviews: [castTitleLabel, castCollectionView])
+        let castStack = UIStackView(arrangedSubviews: [castHeaderRow, castCollectionView])
         castStack.axis = .vertical
         castStack.spacing = AppSpacing.stackMD
 
-        let reviewsSection = UIStackView(arrangedSubviews: [reviewsTitleLabel, reviewsStack, reviewsEmptyLabel, showAllReviewsButton])
+        let reviewsSection = UIStackView(arrangedSubviews: [
+            reviewsTitleLabel, reviewsStack, reviewsEmptyLabel, showAllReviewsButton
+        ])
         reviewsSection.axis = .vertical
         reviewsSection.spacing = AppSpacing.stackMD
         reviewsSection.alignment = .fill
 
-        let paddedStack = UIStackView(arrangedSubviews: [identityRow, genreScrollView, overviewStack, trailerButton, castStack, reviewsSection])
+        let paddedStack = UIStackView(arrangedSubviews: [
+            identityRow,
+            genreScrollView,
+            overviewStack,
+            trailerButton,
+            castStack,
+            reviewsSection
+        ])
         paddedStack.axis = .vertical
-        paddedStack.spacing = AppSpacing.sectionGap
+        paddedStack.spacing = AppSpacing.stackLG
         paddedStack.translatesAutoresizingMaskIntoConstraints = false
         paddedStack.isLayoutMarginsRelativeArrangement = true
         paddedStack.layoutMargins = UIEdgeInsets(
@@ -355,15 +363,50 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
     private func rebuildGenres(_ genres: [String]) {
         genreStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         for genre in genres {
-            let label = PaddingLabel(insets: UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12))
-            label.text = genre
-            label.font = .systemFont(ofSize: 12, weight: .medium)
-            label.textColor = AppColor.onSurface
-            label.backgroundColor = AppColor.surfaceContainerHigh
-            label.layer.cornerRadius = 14
-            label.clipsToBounds = true
-            genreStack.addArrangedSubview(label)
+            let chip = PaddingLabel(insets: UIEdgeInsets(top: 6, left: 14, bottom: 6, right: 14))
+            chip.text = genre
+            chip.font = .systemFont(ofSize: 12, weight: .medium)
+            chip.textColor = AppColor.onSurface
+            chip.backgroundColor = .clear
+            chip.layer.cornerRadius = 14
+            chip.layer.borderWidth = 1
+            chip.layer.borderColor = AppColor.outline.withAlphaComponent(0.5).cgColor
+            chip.clipsToBounds = true
+            genreStack.addArrangedSubview(chip)
         }
+    }
+
+    private func configureTrailerButton() {
+        var config = trailerButton.configuration ?? UIButton.Configuration.plain()
+        config.title = "Watch Trailer"
+        config.image = UIImage(
+            systemName: "play.fill",
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
+        )
+        config.imagePadding = 8
+        config.imagePlacement = .leading
+        config.baseForegroundColor = AppColor.highEmphasis
+        trailerButton.configuration = config
+        trailerButton.tintColor = AppColor.highEmphasis
+        trailerButton.addTarget(self, action: #selector(trailerTapped), for: .touchUpInside)
+    }
+
+    private func configureShowAllReviewsButton() {
+        showAllReviewsButton.setTitle("Show all", for: .normal)
+        showAllReviewsButton.setTitleColor(AppColor.primary, for: .normal)
+        UIButtonInsets.applyTitleFont(AppFont.labelLG(), to: showAllReviewsButton)
+        showAllReviewsButton.layer.cornerRadius = AppRadius.roundedLG
+        UIButtonInsets.apply(
+            UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16),
+            to: showAllReviewsButton
+        )
+        LiquidGlassStyle.apply(
+            to: showAllReviewsButton,
+            cornerRadius: AppRadius.roundedLG,
+            tintColor: AppColor.surfaceContainer
+        )
+        showAllReviewsButton.addTarget(self, action: #selector(showAllReviewsTapped), for: .touchUpInside)
+        showAllReviewsButton.isHidden = true
     }
 
     private func rebuildReviews(_ reviews: [MovieDetailViewModel.ReviewItem]) {
@@ -460,25 +503,33 @@ private final class CastCell: UICollectionViewCell {
         super.init(frame: frame)
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 32
+        imageView.layer.cornerRadius = 36
+        imageView.layer.borderWidth = 1
+        imageView.layer.borderColor = AppColor.outline.withAlphaComponent(0.4).cgColor
         imageView.backgroundColor = AppColor.surfaceContainerHigh
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        nameLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        nameLabel.font = .systemFont(ofSize: 13, weight: .semibold)
         nameLabel.textColor = AppColor.highEmphasis
         nameLabel.textAlignment = .center
         nameLabel.numberOfLines = 2
+        nameLabel.lineBreakMode = .byWordWrapping
+        nameLabel.adjustsFontSizeToFitWidth = true
+        nameLabel.minimumScaleFactor = 0.8
         roleLabel.font = .systemFont(ofSize: 11)
         roleLabel.textColor = AppColor.onSurfaceVariant
         roleLabel.textAlignment = .center
-        roleLabel.numberOfLines = 1
+        roleLabel.numberOfLines = 2
+        roleLabel.adjustsFontSizeToFitWidth = true
+        roleLabel.minimumScaleFactor = 0.8
         let stack = UIStackView(arrangedSubviews: [imageView, nameLabel, roleLabel])
         stack.axis = .vertical
         stack.spacing = 6
+        stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(stack)
         NSLayoutConstraint.activate([
-            imageView.widthAnchor.constraint(equalToConstant: 64),
-            imageView.heightAnchor.constraint(equalToConstant: 64),
+            imageView.widthAnchor.constraint(equalToConstant: 72),
+            imageView.heightAnchor.constraint(equalToConstant: 72),
             stack.topAnchor.constraint(equalTo: contentView.topAnchor),
             stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),

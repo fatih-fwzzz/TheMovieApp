@@ -21,19 +21,27 @@ public final class GenreChipButton: UIButton {
     }
 
     private func configure() {
-        titleLabel?.font = AppFont.labelLG()
+        var config = UIButton.Configuration.plain()
+        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = AppFont.labelLG()
+            return outgoing
+        }
+        configuration = config
         layer.cornerRadius = 18
-        contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
         updateAppearance()
     }
 
     private func updateAppearance() {
+        var config = configuration ?? .plain()
         if isChipSelected {
-            setTitleColor(AppColor.highEmphasis, for: .normal)
+            config.baseForegroundColor = AppColor.highEmphasis
             LiquidGlassStyle.apply(to: self, cornerRadius: 18, tintColor: AppColor.primaryContainer)
         } else {
-            setTitleColor(AppColor.onSurfaceVariant, for: .normal)
+            config.baseForegroundColor = AppColor.onSurfaceVariant
             LiquidGlassStyle.apply(to: self, cornerRadius: 18, tintColor: AppColor.surfaceContainerHigh)
         }
+        configuration = config
     }
 }

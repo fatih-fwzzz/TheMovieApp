@@ -8,7 +8,7 @@ final class AppDependencies: FeatureDependencies {
     let navigation = AppNavigation()
 
     private init() {
-        let network = AlamofireNetworkService()
+        let network = AlamofireNetworkService(bearerToken: AppConfiguration.tmdbBearerToken)
         movieService = TMDBMovieService(network: network)
         favoritesStore = FavoritesStore()
     }

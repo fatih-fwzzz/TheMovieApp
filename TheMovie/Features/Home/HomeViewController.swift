@@ -10,6 +10,7 @@ public final class HomeViewController: UIViewController, HomeView {
     private let contentStack = UIStackView()
 
     private let logoLabel = UILabel()
+    private let heroContainerView = UIView()
     private let heroCollectionView: UICollectionView
     private let heroTitleLabel = UILabel()
     private let watchTrailerButton = PrimaryButton()
@@ -79,11 +80,11 @@ public final class HomeViewController: UIViewController, HomeView {
 
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let width = view.bounds.width - AppSpacing.containerMargin * 2
-        let heroWidth = max(heroCollectionView.bounds.width, width)
-        heroLayout.itemSize = CGSize(width: heroWidth, height: 280)
-        topTenLayout.itemSize = CGSize(width: width / 3.2, height: 180)
-        let colWidth = (width - AppSpacing.gutter) / 2
+        let fullWidth = view.bounds.width
+        let insetWidth = fullWidth - AppSpacing.containerMargin * 2
+        heroLayout.itemSize = CGSize(width: fullWidth, height: 360)
+        topTenLayout.itemSize = CGSize(width: insetWidth / 3.2, height: 180)
+        let colWidth = (insetWidth - AppSpacing.gutter) / 2
         moviesLayout.itemSize = CGSize(width: colWidth, height: colWidth * 1.55)
         updateMoviesCollectionHeight()
     }
@@ -147,10 +148,26 @@ public final class HomeViewController: UIViewController, HomeView {
         contentStack.spacing = AppSpacing.stackLG
         contentStack.translatesAutoresizingMaskIntoConstraints = false
 
+        // ── Header ──────────────────────────────────────────────────────────
         logoLabel.text = "TheMovie"
         logoLabel.font = AppFont.headlineXL()
-        logoLabel.textColor = AppColor.highEmphasis
+        logoLabel.textColor = AppColor.primary
 
+        let headerRow = UIStackView(arrangedSubviews: [logoLabel])
+        headerRow.axis = .horizontal
+        headerRow.alignment = .center
+        headerRow.spacing = AppSpacing.stackMD
+
+        let headerStack = UIStackView(arrangedSubviews: [headerRow])
+        headerStack.axis = .vertical
+        headerStack.alignment = .leading
+        headerStack.layoutMargins = UIEdgeInsets(
+            top: 0, left: AppSpacing.containerMargin,
+            bottom: 0, right: AppSpacing.containerMargin
+        )
+        headerStack.isLayoutMarginsRelativeArrangement = true
+
+        // ── Hero carousel ────────────────────────────────────────────────────
         heroCollectionView.backgroundColor = .clear
         heroCollectionView.isPagingEnabled = true
         heroCollectionView.showsHorizontalScrollIndicator = false
@@ -158,23 +175,71 @@ public final class HomeViewController: UIViewController, HomeView {
         heroCollectionView.dataSource = self
         heroCollectionView.register(HeroCell.self, forCellWithReuseIdentifier: HeroCell.id)
         heroCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        heroCollectionView.heightAnchor.constraint(equalToConstant: 280).isActive = true
 
+        // Title + button overlaid at bottom of image
         heroTitleLabel.font = AppFont.headlineXL()
         heroTitleLabel.textColor = AppColor.highEmphasis
         heroTitleLabel.numberOfLines = 2
 
-        watchTrailerButton.setTitle("Watch Trailer", for: .normal)
+        var trailerConfig = watchTrailerButton.configuration ?? UIButton.Configuration.plain()
+        trailerConfig.title = "Watch Trailer"
+        trailerConfig.image = UIImage(
+            systemName: "play.fill",
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
+        )
+        trailerConfig.imagePadding = 8
+        trailerConfig.imagePlacement = .leading
+        trailerConfig.baseForegroundColor = AppColor.highEmphasis
+        watchTrailerButton.configuration = trailerConfig
+        watchTrailerButton.tintColor = AppColor.highEmphasis
         watchTrailerButton.addTarget(self, action: #selector(trailerTapped), for: .touchUpInside)
 
+        heroTitleLabel.textAlignment = .center
+
+        let heroTextOverlay = UIStackView(arrangedSubviews: [heroTitleLabel, watchTrailerButton])
+        heroTextOverlay.axis = .vertical
+        heroTextOverlay.spacing = AppSpacing.stackMD
+        heroTextOverlay.alignment = .center
+        heroTextOverlay.layoutMargins = UIEdgeInsets(
+            top: 0, left: AppSpacing.containerMargin,
+            bottom: AppSpacing.stackLG, right: AppSpacing.containerMargin
+        )
+        heroTextOverlay.isLayoutMarginsRelativeArrangement = true
+        heroTextOverlay.translatesAutoresizingMaskIntoConstraints = false
+
+        heroContainerView.clipsToBounds = true
+        heroContainerView.translatesAutoresizingMaskIntoConstraints = false
+        heroContainerView.heightAnchor.constraint(equalToConstant: 360).isActive = true
+
+        heroContainerView.addSubview(heroCollectionView)
+        heroContainerView.addSubview(heroTextOverlay)
+
+        NSLayoutConstraint.activate([
+            heroCollectionView.topAnchor.constraint(equalTo: heroContainerView.topAnchor),
+            heroCollectionView.leadingAnchor.constraint(equalTo: heroContainerView.leadingAnchor),
+            heroCollectionView.trailingAnchor.constraint(equalTo: heroContainerView.trailingAnchor),
+            heroCollectionView.bottomAnchor.constraint(equalTo: heroContainerView.bottomAnchor),
+            heroTextOverlay.leadingAnchor.constraint(equalTo: heroContainerView.leadingAnchor),
+            heroTextOverlay.trailingAnchor.constraint(equalTo: heroContainerView.trailingAnchor),
+            heroTextOverlay.bottomAnchor.constraint(equalTo: heroContainerView.bottomAnchor)
+        ])
+
+        // ── "NOW TRENDING" + dots (below hero, centred) ─────────────────────
         trendingLabel.text = "NOW TRENDING"
         trendingLabel.font = AppFont.labelSM()
         trendingLabel.textColor = AppColor.onSurfaceVariant
+        trendingLabel.textAlignment = .center
 
         pageControl.currentPageIndicatorTintColor = AppColor.primaryContainer
         pageControl.pageIndicatorTintColor = UIColor.white.withAlphaComponent(0.3)
         pageControl.addTarget(self, action: #selector(pageChanged), for: .valueChanged)
 
+        let trendingInfoRow = UIStackView(arrangedSubviews: [trendingLabel, pageControl])
+        trendingInfoRow.axis = .vertical
+        trendingInfoRow.alignment = .center
+        trendingInfoRow.spacing = AppSpacing.base
+
+        // ── Top 10 ───────────────────────────────────────────────────────────
         topTenCollectionView.backgroundColor = .clear
         topTenCollectionView.showsHorizontalScrollIndicator = false
         topTenCollectionView.delegate = self
@@ -182,12 +247,37 @@ public final class HomeViewController: UIViewController, HomeView {
         topTenCollectionView.register(PosterCell.self, forCellWithReuseIdentifier: PosterCell.id)
         topTenCollectionView.translatesAutoresizingMaskIntoConstraints = false
         topTenCollectionView.heightAnchor.constraint(equalToConstant: 180).isActive = true
+        topTenCollectionView.contentInset = UIEdgeInsets(
+            top: 0, left: AppSpacing.containerMargin,
+            bottom: 0, right: AppSpacing.containerMargin
+        )
 
+        let topTenHeader = UILabel()
+        topTenHeader.text = "Top 10 This Week"
+        topTenHeader.font = AppFont.headlineMD()
+        topTenHeader.textColor = AppColor.highEmphasis
+
+        let topTenLabelRow = UIStackView(arrangedSubviews: [topTenHeader])
+        topTenLabelRow.layoutMargins = UIEdgeInsets(
+            top: 0, left: AppSpacing.containerMargin,
+            bottom: 0, right: AppSpacing.containerMargin
+        )
+        topTenLabelRow.isLayoutMarginsRelativeArrangement = true
+
+        let topTenSection = UIStackView(arrangedSubviews: [topTenLabelRow, topTenCollectionView])
+        topTenSection.axis = .vertical
+        topTenSection.spacing = AppSpacing.stackMD
+
+        // ── All Movies ───────────────────────────────────────────────────────
         allMoviesHeader.text = "All Movies"
         allMoviesHeader.font = AppFont.headlineMD()
         allMoviesHeader.textColor = AppColor.highEmphasis
 
         chipsScrollView.showsHorizontalScrollIndicator = false
+        chipsScrollView.contentInset = UIEdgeInsets(
+            top: 0, left: AppSpacing.containerMargin,
+            bottom: 0, right: AppSpacing.containerMargin
+        )
         chipsStack.axis = .horizontal
         chipsStack.spacing = AppSpacing.base
         chipsStack.translatesAutoresizingMaskIntoConstraints = false
@@ -213,32 +303,31 @@ public final class HomeViewController: UIViewController, HomeView {
 
         loadingFooter.color = AppColor.onSurfaceVariant
 
-        let headerStack = UIStackView(arrangedSubviews: [logoLabel])
-        headerStack.axis = .vertical
-        headerStack.alignment = .leading
+        let moviesHeaderRow = UIStackView(arrangedSubviews: [allMoviesHeader])
+        moviesHeaderRow.layoutMargins = UIEdgeInsets(
+            top: 0, left: AppSpacing.containerMargin,
+            bottom: 0, right: AppSpacing.containerMargin
+        )
+        moviesHeaderRow.isLayoutMarginsRelativeArrangement = true
 
-        let heroOverlay = UIStackView(arrangedSubviews: [heroTitleLabel, watchTrailerButton, trendingLabel, pageControl])
-        heroOverlay.axis = .vertical
-        heroOverlay.spacing = AppSpacing.stackMD
-        heroOverlay.layoutMargins = UIEdgeInsets(top: 0, left: AppSpacing.containerMargin, bottom: 16, right: AppSpacing.containerMargin)
-        heroOverlay.isLayoutMarginsRelativeArrangement = true
+        let moviesGrid = UIStackView(arrangedSubviews: [moviesCollectionView, loadingFooter])
+        moviesGrid.axis = .vertical
+        moviesGrid.spacing = AppSpacing.base
+        moviesGrid.layoutMargins = UIEdgeInsets(
+            top: 0, left: AppSpacing.containerMargin,
+            bottom: 0, right: AppSpacing.containerMargin
+        )
+        moviesGrid.isLayoutMarginsRelativeArrangement = true
 
-        let topTenHeader = UILabel()
-        topTenHeader.text = "Top 10 This Week"
-        topTenHeader.font = AppFont.headlineMD()
-        topTenHeader.textColor = AppColor.highEmphasis
-
-        let topTenSection = UIStackView(arrangedSubviews: [topTenHeader, topTenCollectionView])
-        topTenSection.axis = .vertical
-        topTenSection.spacing = AppSpacing.stackMD
-
-        let moviesSection = UIStackView(arrangedSubviews: [allMoviesHeader, chipsScrollView, moviesCollectionView, loadingFooter])
+        let moviesSection = UIStackView(arrangedSubviews: [moviesHeaderRow, chipsScrollView, moviesGrid])
         moviesSection.axis = .vertical
         moviesSection.spacing = AppSpacing.stackMD
 
+        // ── Compose content stack ────────────────────────────────────────────
         contentStack.addArrangedSubview(headerStack)
-        contentStack.addArrangedSubview(heroCollectionView)
-        contentStack.addArrangedSubview(heroOverlay)
+        contentStack.addArrangedSubview(heroContainerView)
+        contentStack.setCustomSpacing(AppSpacing.base, after: heroContainerView)
+        contentStack.addArrangedSubview(trendingInfoRow)
         contentStack.addArrangedSubview(topTenSection)
         contentStack.addArrangedSubview(moviesSection)
 
@@ -252,10 +341,10 @@ public final class HomeViewController: UIViewController, HomeView {
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
-            contentStack.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: AppSpacing.containerMargin),
-            contentStack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -AppSpacing.containerMargin),
+            contentStack.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor),
+            contentStack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -100),
-            contentStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -AppSpacing.containerMargin * 2)
+            contentStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
         ])
 
         let refresh = UIRefreshControl()
@@ -322,13 +411,13 @@ public final class HomeViewController: UIViewController, HomeView {
     }
 
     private func currentHeroPage() -> Int {
-        let pageWidth = max(heroCollectionView.bounds.width, 1)
+        let pageWidth = max(heroLayout.itemSize.width, heroCollectionView.bounds.width, 1)
         return Int(round(heroCollectionView.contentOffset.x / pageWidth))
     }
 
     private func scrollHeroToIndex(_ index: Int, animated: Bool) {
         guard viewModel?.heroItems.indices.contains(index) == true else { return }
-        let pageWidth = max(heroCollectionView.bounds.width, 1)
+        let pageWidth = max(heroLayout.itemSize.width, heroCollectionView.bounds.width, 1)
         let targetOffset = CGPoint(x: CGFloat(index) * pageWidth, y: 0)
 
         if animated {
@@ -460,11 +549,16 @@ private final class HeroCell: UICollectionViewCell {
         contentView.addSubview(imageView)
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: -AppSpacing.containerMargin),
-            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: AppSpacing.containerMargin),
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
-        gradient.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.8).cgColor]
+        // Dissolve matching Movie Detail: near-transparent top → full background color at bottom
+        gradient.colors = [
+            UIColor.black.withAlphaComponent(0.15).cgColor,
+            AppColor.background.cgColor
+        ]
+        gradient.locations = [0.0, 1.0]
         imageView.layer.addSublayer(gradient)
     }
 

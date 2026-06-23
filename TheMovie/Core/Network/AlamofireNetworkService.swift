@@ -1,21 +1,23 @@
 import Foundation
 
-public protocol NetworkServiceProtocol: Sendable {
+public protocol NetworkServiceProtocol {
     func request<T: Decodable>(_ type: T.Type, endpoint: TMDBEndpoint) async throws -> T
 }
 
 public final class AlamofireNetworkService: NetworkServiceProtocol, @unchecked Sendable {
     private let session: URLSession
+    private let bearerToken: String
 
-    public init(session: URLSession = .shared) {
+    public init(session: URLSession = .shared, bearerToken: String) {
         self.session = session
+        self.bearerToken = bearerToken
     }
 
-    public func request<T: Decodable>(_ type: T.Type, endpoint: TMDBEndpoint) async throws -> T {
+    nonisolated public func request<T: Decodable>(_ type: T.Type, endpoint: TMDBEndpoint) async throws -> T {
         guard let url = endpoint.url else { throw NetworkError.invalidURL }
 
         var request = URLRequest(url: url)
-        request.setValue("Bearer \(AppConfiguration.tmdbBearerToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         do {

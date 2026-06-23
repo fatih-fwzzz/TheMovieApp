@@ -31,9 +31,8 @@ public struct SearchViewModel {
         public let movieId: Int
         public let title: String
         public let year: String
-        public let tagline: String
         public let ratingText: String
-        public let posterURLs: [URL?]
+        public let posterURL: URL?
     }
 
     public struct SearchRow {

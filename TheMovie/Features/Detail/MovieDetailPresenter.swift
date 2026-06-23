@@ -58,19 +58,19 @@ public final class MovieDetailPresenter: MovieDetailPresenting {
 
     public func didToggleOverviewExpanded() {
         viewModel = updatedViewModel(isOverviewExpanded: !viewModel.isOverviewExpanded)
-        Task { await presentViewModel() }
+        Task { @MainActor in presentViewModel() }
     }
 
     public func didTapFavorite() {
         guard let loadedDetail else { return }
         interactor.toggleFavorite(loadedDetail)
         viewModel = updatedViewModel(isFavorite: interactor.isFavorite(movieId: movieId))
-        Task { await presentViewModel() }
+        Task { @MainActor in presentViewModel() }
     }
 
     private func load() async {
         viewModel = updatedViewModel(isLoading: true)
-        await presentViewModel()
+        await MainActor.run { presentViewModel() }
         do {
             async let detail = interactor.fetchDetail(movieId: movieId)
             async let trailer = interactor.fetchTrailer(movieId: movieId)
@@ -102,14 +102,16 @@ public final class MovieDetailPresenter: MovieDetailPresenting {
                 isFavorite: interactor.isFavorite(movieId: movieId),
                 errorMessage: nil
             )
-            await presentViewModel()
+            await MainActor.run { presentViewModel() }
         } catch {
             viewModel = updatedViewModel(
                 isLoading: false,
                 errorMessage: (error as? LocalizedError)?.errorDescription ?? "Failed to load movie."
             )
-            await presentViewModel()
-            await presentError(viewModel.errorMessage ?? "Failed to load movie.")
+            await MainActor.run {
+                presentViewModel()
+                presentError(viewModel.errorMessage ?? "Failed to load movie.")
+            }
         }
     }
 

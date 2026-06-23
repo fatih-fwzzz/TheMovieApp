@@ -17,10 +17,16 @@ public final class PrimaryButton: UIButton {
     }
 
     private func configure() {
-        setTitleColor(AppColor.highEmphasis, for: .normal)
-        titleLabel?.font = AppFont.labelLG()
+        var config = UIButton.Configuration.plain()
+        config.baseForegroundColor = AppColor.highEmphasis
+        config.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 24, bottom: 14, trailing: 24)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = AppFont.labelLG()
+            return outgoing
+        }
+        configuration = config
         layer.cornerRadius = 26
-        contentEdgeInsets = UIEdgeInsets(top: 14, left: 24, bottom: 14, right: 24)
         LiquidGlassStyle.apply(to: self, cornerRadius: 26, tintColor: AppColor.primaryContainer)
     }
 }
@@ -42,10 +48,16 @@ public final class OutlinedButton: UIButton {
     }
 
     private func configure() {
-        setTitleColor(AppColor.onSurface, for: .normal)
-        titleLabel?.font = AppFont.labelLG()
+        var config = UIButton.Configuration.plain()
+        config.baseForegroundColor = AppColor.onSurface
+        config.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = AppFont.labelLG()
+            return outgoing
+        }
+        configuration = config
         layer.cornerRadius = AppRadius.roundedLG
-        contentEdgeInsets = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
         LiquidGlassStyle.apply(to: self, cornerRadius: AppRadius.roundedLG, tintColor: AppColor.surfaceContainer)
     }
 }

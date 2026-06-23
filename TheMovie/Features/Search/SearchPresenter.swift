@@ -20,9 +20,11 @@ public final class SearchPresenter: SearchPresenting {
         Task {
             do {
                 trending = try await interactor.fetchTrending()
-                await presentViewModel(isLoading: false)
+                await MainActor.run { presentViewModel(isLoading: false) }
             } catch {
-                await presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load trending.")
+                await MainActor.run {
+                    presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load trending.")
+                }
             }
         }
     }
@@ -31,18 +33,20 @@ public final class SearchPresenter: SearchPresenting {
         self.query = query.trimmingCharacters(in: .whitespacesAndNewlines)
         searchTask?.cancel()
         guard !self.query.isEmpty else {
-            Task { await presentViewModel(isLoading: false) }
+            Task { @MainActor in presentViewModel(isLoading: false) }
             return
         }
-        Task { await presentViewModel(isLoading: true) }
+        Task { @MainActor in presentViewModel(isLoading: true) }
         searchTask = Task {
             try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled else { return }
             do {
                 searchResults = try await interactor.searchMovies(query: self.query)
-                await presentViewModel(isLoading: false)
+                await MainActor.run { presentViewModel(isLoading: false) }
             } catch {
-                await presentError((error as? LocalizedError)?.errorDescription ?? "Search failed.")
+                await MainActor.run {
+                    presentError((error as? LocalizedError)?.errorDescription ?? "Search failed.")
+                }
             }
         }
     }
@@ -75,14 +79,12 @@ public final class SearchPresenter: SearchPresenting {
     private func makeViewModel(isLoading: Bool) -> SearchViewModel {
         if query.isEmpty {
             let rows = trending.map { movie -> SearchViewModel.Row in
-                let posters = trending.shuffled().prefix(3).map { TMDBImageURL.poster(path: $0.posterPath) }
                 return .trending(SearchViewModel.TrendingRow(
                     movieId: movie.id,
                     title: movie.title,
                     year: movie.releaseYear,
-                    tagline: String((movie.overview ?? "").prefix(80)),
                     ratingText: String(format: "%.1f", movie.voteAverage ?? 0),
-                    posterURLs: Array(posters)
+                    posterURL: TMDBImageURL.poster(path: movie.posterPath)
                 ))
             }
             return SearchViewModel(rows: rows, isSearching: false, isLoading: isLoading)

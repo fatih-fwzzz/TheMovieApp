@@ -99,54 +99,67 @@ extension SearchViewController: UITableViewDataSource, UITableViewDelegate {
     public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         guard let viewModel else { return 88 }
         if case .searchResult = viewModel.rows[indexPath.row] { return 72 }
-        return 96
+        return 80
     }
 }
 
 private final class TrendingCell: UITableViewCell {
     static let id = "TrendingCell"
     private let card = UIView()
+    private let posterView = UIImageView()
     private let titleLabel = UILabel()
     private let yearLabel = UILabel()
-    private let taglineLabel = UILabel()
     private let ratingView = StarRatingView()
-    private let postersStack = UIStackView()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = .clear
         selectionStyle = .none
+
         card.backgroundColor = AppColor.surfaceContainer
         card.layer.cornerRadius = AppRadius.roundedLG
+        card.clipsToBounds = true
         card.translatesAutoresizingMaskIntoConstraints = false
+
+        posterView.contentMode = .scaleAspectFill
+        posterView.clipsToBounds = true
+        posterView.translatesAutoresizingMaskIntoConstraints = false
+
         titleLabel.font = AppFont.labelLG()
         titleLabel.textColor = AppColor.highEmphasis
+        titleLabel.numberOfLines = 1
+
         yearLabel.font = AppFont.labelSM()
         yearLabel.textColor = AppColor.onSurfaceVariant
-        taglineLabel.font = AppFont.bodyMD()
-        taglineLabel.textColor = AppColor.onSurfaceVariant
-        taglineLabel.numberOfLines = 2
-        postersStack.axis = .horizontal
-        postersStack.spacing = -12
-        let titleRow = UIStackView(arrangedSubviews: [titleLabel, yearLabel, UIView(), ratingView])
-        titleRow.alignment = .center
-        let left = UIStackView(arrangedSubviews: [titleRow, taglineLabel])
-        left.axis = .vertical
-        left.spacing = 4
-        let row = UIStackView(arrangedSubviews: [left, postersStack])
-        row.spacing = 8
-        row.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(row)
+
+        let textStack = UIStackView(arrangedSubviews: [titleLabel, yearLabel])
+        textStack.axis = .vertical
+        textStack.spacing = AppSpacing.stackSM
+        textStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let infoRow = UIStackView(arrangedSubviews: [textStack, UIView(), ratingView])
+        infoRow.axis = .horizontal
+        infoRow.alignment = .center
+        infoRow.translatesAutoresizingMaskIntoConstraints = false
+
+        card.addSubview(posterView)
+        card.addSubview(infoRow)
         contentView.addSubview(card)
+
         NSLayoutConstraint.activate([
             card.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             card.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
             card.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            row.topAnchor.constraint(equalTo: card.topAnchor, constant: 12),
-            row.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
-            row.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
-            row.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -12)
+
+            posterView.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            posterView.topAnchor.constraint(equalTo: card.topAnchor),
+            posterView.bottomAnchor.constraint(equalTo: card.bottomAnchor),
+            posterView.widthAnchor.constraint(equalToConstant: 72),
+
+            infoRow.leadingAnchor.constraint(equalTo: posterView.trailingAnchor, constant: 12),
+            infoRow.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
+            infoRow.centerYAnchor.constraint(equalTo: card.centerYAnchor)
         ])
     }
 
@@ -155,20 +168,8 @@ private final class TrendingCell: UITableViewCell {
     func configure(row: SearchViewModel.TrendingRow) {
         titleLabel.text = row.title
         yearLabel.text = row.year
-        taglineLabel.text = row.tagline
         ratingView.configure(score: row.ratingText, goldScore: true)
-        postersStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        for url in row.posterURLs {
-            let iv = UIImageView()
-            iv.translatesAutoresizingMaskIntoConstraints = false
-            iv.widthAnchor.constraint(equalToConstant: 36).isActive = true
-            iv.heightAnchor.constraint(equalToConstant: 54).isActive = true
-            iv.layer.cornerRadius = AppRadius.roundedMD
-            iv.clipsToBounds = true
-            iv.contentMode = .scaleAspectFill
-            iv.kf.setImage(with: url)
-            postersStack.addArrangedSubview(iv)
-        }
+        posterView.kf.setImage(with: row.posterURL, placeholder: UIImage(systemName: "film"))
     }
 }
 
