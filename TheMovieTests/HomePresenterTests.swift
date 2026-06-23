@@ -1,7 +1,6 @@
 import XCTest
 import UIKit
-import NetworkKit
-@testable import HomeKit
+@testable import TheMovie
 
 final class HomePresenterTests: XCTestCase {
     private var sut: HomePresenter!

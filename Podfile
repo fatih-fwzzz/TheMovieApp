@@ -6,26 +6,15 @@ target 'TheMovie' do
   pod 'Alamofire', '~> 5.8'
   pod 'SkeletonView', '~> 1.30'
   pod 'Hero', '~> 1.6'
-
-  pod 'NetworkKit',     :path => 'Modules/NetworkKit'
-  pod 'UIComponentKit', :path => 'Modules/UIComponentKit'
-  pod 'HomeKit',        :path => 'Modules/HomeKit'
-  pod 'SearchKit',      :path => 'Modules/SearchKit'
-  pod 'FavoritesKit',   :path => 'Modules/FavoritesKit'
-  pod 'DetailKit',      :path => 'Modules/DetailKit'
-  pod 'ReviewKit',      :path => 'Modules/ReviewKit'
 end
 
 target 'TheMovieTests' do
   inherit! :search_paths
   pod 'Nimble', '~> 13.0'
   pod 'Quick', '~> 7.0'
-  pod 'NetworkKit',     :path => 'Modules/NetworkKit'
-  pod 'HomeKit',        :path => 'Modules/HomeKit'
-  pod 'SearchKit',      :path => 'Modules/SearchKit'
-  pod 'FavoritesKit',   :path => 'Modules/FavoritesKit'
-  pod 'DetailKit',      :path => 'Modules/DetailKit'
-  pod 'ReviewKit',      :path => 'Modules/ReviewKit'
+  pod 'Kingfisher', '~> 7.0'
+  pod 'SkeletonView', '~> 1.30'
+  pod 'Hero', '~> 1.6'
 end
 
 def sync_tmdb_config

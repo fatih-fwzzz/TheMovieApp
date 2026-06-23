@@ -9,55 +9,20 @@ PODS:
     - CwlCatchException (~> 2.2.1)
     - CwlMachBadInstructionHandler (~> 2.2.2)
     - CwlPosixPreconditionTesting (~> 2.2.2)
-  - DetailKit (1.0.0):
-    - Kingfisher (~> 7.0)
-    - NetworkKit
-    - UIComponentKit
-  - FavoritesKit (1.0.0):
-    - Kingfisher (~> 7.0)
-    - NetworkKit
-    - UIComponentKit
   - Hero (1.6.4)
-  - HomeKit (1.0.0):
-    - Hero (~> 1.6)
-    - Kingfisher (~> 7.0)
-    - NetworkKit
-    - SkeletonView (~> 1.30)
-    - UIComponentKit
   - Kingfisher (7.12.0)
-  - NetworkKit (1.0.0):
-    - Alamofire (~> 5.8)
   - Nimble (13.8.0):
     - CwlPreconditionTesting (~> 2.2.0)
   - Quick (7.6.2)
-  - ReviewKit (1.0.0):
-    - Kingfisher (~> 7.0)
-    - NetworkKit
-    - SkeletonView (~> 1.30)
-    - UIComponentKit
-  - SearchKit (1.0.0):
-    - Kingfisher (~> 7.0)
-    - NetworkKit
-    - SkeletonView (~> 1.30)
-    - UIComponentKit
   - SkeletonView (1.30.4)
-  - UIComponentKit (1.0.0):
-    - SkeletonView (~> 1.30)
 
 DEPENDENCIES:
   - Alamofire (~> 5.8)
-  - DetailKit (from `Modules/DetailKit`)
-  - FavoritesKit (from `Modules/FavoritesKit`)
   - Hero (~> 1.6)
-  - HomeKit (from `Modules/HomeKit`)
   - Kingfisher (~> 7.0)
-  - NetworkKit (from `Modules/NetworkKit`)
   - Nimble (~> 13.0)
   - Quick (~> 7.0)
-  - ReviewKit (from `Modules/ReviewKit`)
-  - SearchKit (from `Modules/SearchKit`)
   - SkeletonView (~> 1.30)
-  - UIComponentKit (from `Modules/UIComponentKit`)
 
 SPEC REPOS:
   trunk:
@@ -73,22 +38,6 @@ SPEC REPOS:
     - Quick
     - SkeletonView
 
-EXTERNAL SOURCES:
-  DetailKit:
-    :path: Modules/DetailKit
-  FavoritesKit:
-    :path: Modules/FavoritesKit
-  HomeKit:
-    :path: Modules/HomeKit
-  NetworkKit:
-    :path: Modules/NetworkKit
-  ReviewKit:
-    :path: Modules/ReviewKit
-  SearchKit:
-    :path: Modules/SearchKit
-  UIComponentKit:
-    :path: Modules/UIComponentKit
-
 SPEC CHECKSUMS:
   Alamofire: 400275dd1c6d87d95a041861d2a59da4b520a203
   CwlCatchException: 7acc161b299a6de7f0a46a6ed741eae2c8b4d75a
@@ -96,19 +45,12 @@ SPEC CHECKSUMS:
   CwlMachBadInstructionHandler: dae4fdd124d45c9910ac240287cc7b898f4502a1
   CwlPosixPreconditionTesting: ecd095aa2129e740b44301c34571e8d85906fb88
   CwlPreconditionTesting: 67a0047dd4de4382b93442c0e3f25207f984f35a
-  DetailKit: c891662bfe8ecef9ca2187e126b189eb69764b25
-  FavoritesKit: 60982f3fd526fa07061613441cfeacf8bf92fe73
   Hero: 473a0143017e1371d050fcbedb67d317925097f2
-  HomeKit: 4614b8ddd53411000a064c6fd1a5055fc5236d79
   Kingfisher: 53a10ea35051a436b5fb626ca2dd8f3144d755e9
-  NetworkKit: b9e720fd09f1a93291427eb6ea3198b63a6bb0af
   Nimble: 84982ec98b5dfc0ffe9ae2ed4c0b2fc57807c2d5
   Quick: b8bec97cd4b9f21da0472d45580f763b801fc353
-  ReviewKit: ae4444b1240b1af3dabcc99691ce6cb2aaa8b886
-  SearchKit: 0d54203ef637808952bb056ef1f603d4452e8286
   SkeletonView: 5a050f6411e697abd4cda0a8d767013399dccd69
-  UIComponentKit: 3ae85492827966f07102ab76ea741fb731e0f76c
 
-PODFILE CHECKSUM: cea3599837e735cd64b58e404233e9e6e3d4737e
+PODFILE CHECKSUM: daa2e42c4174553ce7d44f5cadc59b78712d80c2
 
 COCOAPODS: 1.16.2

@@ -1,7 +1,6 @@
 import XCTest
 import UIKit
-import NetworkKit
-@testable import SearchKit
+@testable import TheMovie
 
 final class SearchPresenterTests: XCTestCase {
     private var sut: SearchPresenter!
