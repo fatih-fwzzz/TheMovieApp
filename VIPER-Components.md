@@ -4,6 +4,28 @@ Architecture reference: [MoneyPortfolioApp/VIPER-Components.md](../MoneyPortfoli
 
 ---
 
+## Project Structure
+
+All source lives in the **TheMovie** app target (no local CocoaPods modules):
+
+```
+TheMovie/
+  App/                    — App shell, DI, navigation
+  Core/
+    Network/              — TMDB client, models, favorites store
+    UI/                   — Design system + shared components
+  Features/
+    Home/
+    Search/
+    Favorites/
+    Detail/
+    Reviews/
+```
+
+Third-party libraries (Kingfisher, Alamofire, SkeletonView, Hero) remain in the Podfile.
+
+---
+
 ## VIPER Roles at a Glance
 
 | Letter | Role | Responsibility |
@@ -11,14 +33,14 @@ Architecture reference: [MoneyPortfolioApp/VIPER-Components.md](../MoneyPortfoli
 | **V** | View | Renders UI, forwards user actions to Presenter |
 | **I** | Interactor | Fetches or provides business data |
 | **P** | Presenter | Orchestrates flow, maps domain models → ViewModels |
-| **E** | Entity | Plain domain data structures (`NetworkKit/Domain`) |
+| **E** | Entity | Plain domain data structures (`Core/Network`) |
 | **R** | Router | Handles navigation between screens |
 | **Builder** | *(convention)* | Assembles and wires VIPER objects for a module |
 | **Contracts** | *(convention)* | Protocols + ViewModel definitions per module |
 
 ---
 
-## Module: Home (`HomeKit`)
+## Feature: Home (`TheMovie/Features/Home`)
 
 | File | VIPER Role |
 |------|------------|
@@ -33,7 +55,7 @@ Protocols: `HomeView`, `HomePresenting`, `HomeInteracting`, `HomeRouting`
 
 ---
 
-## Module: Search (`SearchKit`)
+## Feature: Search (`TheMovie/Features/Search`)
 
 | File | VIPER Role |
 |------|------------|
@@ -46,7 +68,7 @@ Protocols: `HomeView`, `HomePresenting`, `HomeInteracting`, `HomeRouting`
 
 ---
 
-## Module: Favorites (`FavoritesKit`)
+## Feature: Favorites (`TheMovie/Features/Favorites`)
 
 | File | VIPER Role |
 |------|------------|
@@ -59,24 +81,24 @@ Protocols: `HomeView`, `HomePresenting`, `HomeInteracting`, `HomeRouting`
 
 ---
 
-## Module: Movie Detail (`DetailKit`)
+## Feature: Movie Detail (`TheMovie/Features/Detail`)
 
 | File | VIPER Role |
 |------|------------|
-| `MovieDetailView.swift` | **View** (SwiftUI) |
+| `MovieDetailViewController.swift` | **View** (UIKit) |
 | `MovieDetailInteractor.swift` | **Interactor** |
-| `MovieDetailPresenter.swift` | **Presenter** (`ObservableObject`) |
+| `MovieDetailPresenter.swift` | **Presenter** |
 | `MovieDetailRouter.swift` | **Router** |
-| `MovieDetailBuilder.swift` | **Builder** → `UIHostingController` |
+| `MovieDetailBuilder.swift` | **Builder** |
 | `MovieDetailContracts.swift` | **Contracts** |
 
 ---
 
-## Module: Reviews (`ReviewKit`)
+## Feature: Reviews (`TheMovie/Features/Reviews`)
 
 | File | VIPER Role |
 |------|------------|
-| `ReviewsViewController.swift` | **View** |
+| `ReviewsView.swift` | **View** (SwiftUI) |
 | `ReviewsInteractor.swift` | **Interactor** |
 | `ReviewsPresenter.swift` | **Presenter** |
 | `ReviewsBuilder.swift` | **Builder** |
@@ -86,7 +108,7 @@ Protocols: `HomeView`, `HomePresenting`, `HomeInteracting`, `HomeRouting`
 
 ---
 
-## Entity + Data (`NetworkKit`)
+## Entity + Data (`TheMovie/Core/Network`)
 
 | File | Role |
 |------|------|
@@ -98,13 +120,13 @@ Protocols: `HomeView`, `HomePresenting`, `HomeInteracting`, `HomeRouting`
 
 ---
 
-## App Composition Root
+## App Composition Root (`TheMovie/App`)
 
 | File | Role |
 |------|------|
 | `AppRootBuilder.swift` | Builds `UITabBarController` with 3 tabs |
 | `AppDependencies.swift` | Shared service container |
-| `AppNavigation.swift` | Cross-pod routing adapter |
+| `AppNavigation.swift` | Cross-feature routing adapter |
 | `SceneDelegate.swift` | Window + `AppRootBuilder` |
 
 ---
@@ -113,8 +135,8 @@ Protocols: `HomeView`, `HomePresenting`, `HomeInteracting`, `HomeRouting`
 
 ```
 App Launch → Tab Bar (Home | Search | Favorites)
-  → Movie Detail (SwiftUI)
-    → User Reviews (UIKit)
+  → Movie Detail (UIKit)
+    → User Reviews (SwiftUI)
 ```
 
-Cross-pod navigation: feature Routers delegate to `AppNavigation`, which calls peer `Builder.build(...)`.
+Cross-feature navigation: feature Routers delegate to `AppNavigation`, which calls peer `Builder.build(...)`.

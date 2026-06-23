@@ -1,5 +1,5 @@
 import XCTest
-import NetworkKit
+@testable import TheMovie
 
 final class NetworkKitTests: XCTestCase {
     func test_tmdbEndpoint_genreListURL() {

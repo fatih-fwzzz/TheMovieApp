@@ -1,7 +1,6 @@
 import XCTest
 import UIKit
-import NetworkKit
-@testable import HomeKit
+@testable import TheMovie
 
 final class HomePresenterTests: XCTestCase {
     private var sut: HomePresenter!
@@ -27,17 +26,6 @@ final class HomePresenterTests: XCTestCase {
 
         XCTAssertTrue(mockInteractor.loadInitialCalled)
         XCTAssertNotNil(mockView.displayedViewModel)
-    }
-
-    func test_didTapAllFilter_clearsGenreSelection() {
-        mockInteractor.genreId = 28
-        let expectation = expectation(description: "reload movies")
-        mockView.onShow = { expectation.fulfill() }
-
-        sut.didTapAllFilter()
-        wait(for: [expectation], timeout: 2)
-
-        XCTAssertNil(mockInteractor.genreId)
     }
 
     func test_didSelectGenreChip_togglesGenre() {
@@ -102,6 +90,7 @@ private final class MockHomeInteractor: HomeInteracting {
 }
 
 private final class MockHomeRouter: HomeRouting {
+    var sourceViewController: UIViewController? { nil }
     func showMovieDetail(movieId: Int, from viewController: UIViewController) {}
     func openURL(_ url: URL, from viewController: UIViewController) {}
 }

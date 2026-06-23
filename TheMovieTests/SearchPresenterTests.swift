@@ -1,7 +1,6 @@
 import XCTest
 import UIKit
-import NetworkKit
-@testable import SearchKit
+@testable import TheMovie
 
 final class SearchPresenterTests: XCTestCase {
     private var sut: SearchPresenter!
@@ -67,5 +66,6 @@ private final class MockSearchInteractor: SearchInteracting {
 }
 
 private final class MockSearchRouter: SearchRouting {
+    var sourceViewController: UIViewController? { nil }
     func showMovieDetail(movieId: Int, from viewController: UIViewController) {}
 }
