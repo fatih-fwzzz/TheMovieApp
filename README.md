@@ -10,8 +10,6 @@ A cinematic iOS movie discovery app built with **UIKit**, **SwiftUI**, and **VIP
   <img src="docs/screenshots/favorites.png" alt="Favorites screen" width="200" />
 </p>
 
-> **Note:** Screenshots above are placeholders. Replace the PNG files in [`docs/screenshots/`](docs/screenshots/) with real app captures.
-
 ---
 
 ## Features
