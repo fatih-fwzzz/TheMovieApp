@@ -2,6 +2,7 @@ import UIKit
 
 public final class HomeRouter: HomeRouting {
     public weak var viewController: UIViewController?
+    public var sourceViewController: UIViewController? { viewController }
     private weak var routing: HomeRouting?
 
     public init(routing: HomeRouting) {

@@ -8,7 +8,13 @@ public final class HomeInteractor: HomeInteracting {
     private(set) var hasReachedEnd = false
     private var genreId: Int?
 
-    private static let displayedGenres = ["Action", "Horror", "Sci-Fi", "Comedy", "Drama"]
+    private static let displayedGenres: [(displayName: String, apiName: String)] = [
+        ("Action", "Action"),
+        ("Horror", "Horror"),
+        ("Sci-Fi", "Science Fiction"),
+        ("Comedy", "Comedy"),
+        ("Drama", "Drama")
+    ]
 
     public init(movieService: MovieServiceProtocol) {
         self.movieService = movieService
@@ -21,8 +27,9 @@ public final class HomeInteractor: HomeInteracting {
         async let movies = movieService.discoverMovies(genreId: genreId, page: currentPage)
         let (trendingResult, genresResult, moviesResult) = try await (trending, genres, movies)
         hasReachedEnd = moviesResult.page >= moviesResult.totalPages
-        let filteredGenres = Self.displayedGenres.compactMap { name in
-            genresResult.first { $0.name == name }
+        let filteredGenres = Self.displayedGenres.compactMap { entry -> Genre? in
+            guard let genre = genresResult.first(where: { $0.name == entry.apiName }) else { return nil }
+            return Genre(id: genre.id, name: entry.displayName)
         }
         return HomeInteractorResult(
             trending: trendingResult,

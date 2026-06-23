@@ -7,7 +7,7 @@ import UIComponentKit
 enum AppRootBuilder {
     static func buildRootViewController() -> UIViewController {
         let dependencies = AppDependencies.shared
-        let navigation = AppNavigation()
+        let navigation = dependencies.navigation
 
         let homeNav = UINavigationController(
             rootViewController: HomeBuilder.build(dependencies: dependencies, routing: navigation)

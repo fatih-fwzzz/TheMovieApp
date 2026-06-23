@@ -67,5 +67,6 @@ private final class MockSearchInteractor: SearchInteracting {
 }
 
 private final class MockSearchRouter: SearchRouting {
+    var sourceViewController: UIViewController? { nil }
     func showMovieDetail(movieId: Int, from viewController: UIViewController) {}
 }

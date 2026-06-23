@@ -12,25 +12,33 @@ import Hero
 final class AppNavigation: HomeRouting, SearchRouting, FavoritesRouting, MovieDetailRouting {
     weak var tabBarController: UITabBarController?
 
+    var sourceViewController: UIViewController? { nil }
+
     func showMovieDetail(movieId: Int, from viewController: UIViewController) {
-        let destination = MovieDetailBuilder.build(
-            movieId: movieId,
-            dependencies: AppDependencies.shared,
-            routing: self
-        )
-        viewController.navigationController?.hero.isEnabled = true
-        viewController.navigationController?.hero.navigationAnimationType = .auto
-        destination.hero.isEnabled = true
-        viewController.navigationController?.pushViewController(destination, animated: true)
+        Task { @MainActor in
+            let destination = MovieDetailBuilder.build(
+                movieId: movieId,
+                dependencies: AppDependencies.shared,
+                routing: self
+            )
+            viewController.navigationController?.hero.isEnabled = true
+            viewController.navigationController?.hero.navigationAnimationType = .auto
+            destination.hero.isEnabled = true
+            viewController.navigationController?.pushViewController(destination, animated: true)
+        }
     }
 
     func openURL(_ url: URL, from viewController: UIViewController) {
-        let safari = SFSafariViewController(url: url)
-        viewController.present(safari, animated: true)
+        Task { @MainActor in
+            let safari = SFSafariViewController(url: url)
+            viewController.present(safari, animated: true)
+        }
     }
 
     func switchToHomeTab() {
-        tabBarController?.selectedIndex = 0
+        Task { @MainActor in
+            tabBarController?.selectedIndex = 0
+        }
     }
 
     func dismiss(from viewController: UIViewController) {

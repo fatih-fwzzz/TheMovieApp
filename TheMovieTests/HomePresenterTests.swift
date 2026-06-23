@@ -102,6 +102,7 @@ private final class MockHomeInteractor: HomeInteracting {
 }
 
 private final class MockHomeRouter: HomeRouting {
+    var sourceViewController: UIViewController? { nil }
     func showMovieDetail(movieId: Int, from viewController: UIViewController) {}
     func openURL(_ url: URL, from viewController: UIViewController) {}
 }

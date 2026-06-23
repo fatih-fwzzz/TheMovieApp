@@ -1,6 +1,7 @@
 import Foundation
 import NetworkKit
 import UIComponentKit
+import UIKit
 
 public final class HomePresenter: HomePresenting {
     public weak var view: HomeView?
@@ -54,13 +55,15 @@ public final class HomePresenter: HomePresenting {
     }
 
     public func didTapWatchTrailer() {
-        guard trending.indices.contains(heroIndex) else { return }
+        guard trending.indices.contains(heroIndex),
+              let viewController = router.sourceViewController else { return }
         let movie = trending[heroIndex]
-        guard let viewController = (router as? HomeRouter)?.viewController else { return }
         Task {
             do {
                 if let url = try await interactor.trailerURL(for: movie.id) {
-                    router.openURL(url, from: viewController)
+                    await presentTrailer(url: url, from: viewController)
+                } else {
+                    await presentError("Trailer not available for this movie.")
                 }
             } catch {
                 await presentError((error as? LocalizedError)?.errorDescription ?? "Trailer unavailable.")
@@ -70,8 +73,10 @@ public final class HomePresenter: HomePresenting {
 
     public func didTapMovie(at index: Int) {
         guard movies.indices.contains(index),
-              let viewController = (router as? HomeRouter)?.viewController else { return }
-        router.showMovieDetail(movieId: movies[index].id, from: viewController)
+              let viewController = router.sourceViewController else { return }
+        Task { @MainActor in
+            router.showMovieDetail(movieId: movies[index].id, from: viewController)
+        }
     }
 
     public func didTapAllFilter() {
@@ -98,6 +103,7 @@ public final class HomePresenter: HomePresenting {
             do {
                 let result = try await interactor.loadInitialData()
                 movies = result.movies.results
+                genres = result.genres
                 await presentViewModel()
             } catch {
                 await presentError((error as? LocalizedError)?.errorDescription ?? "Failed to filter movies.")
@@ -136,6 +142,11 @@ public final class HomePresenter: HomePresenting {
     @MainActor
     private func appendMovies(_ items: [HomeViewModel.MovieItem]) {
         view?.appendMovies(items)
+    }
+
+    @MainActor
+    private func presentTrailer(url: URL, from viewController: UIViewController) {
+        router.openURL(url, from: viewController)
     }
 
     private func makeViewModel() -> HomeViewModel {

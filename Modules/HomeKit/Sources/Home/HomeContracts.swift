@@ -27,6 +27,7 @@ public protocol HomeInteracting: AnyObject {
 }
 
 public protocol HomeRouting: AnyObject {
+    var sourceViewController: UIViewController? { get }
     func showMovieDetail(movieId: Int, from viewController: UIViewController)
     func openURL(_ url: URL, from viewController: UIViewController)
 }

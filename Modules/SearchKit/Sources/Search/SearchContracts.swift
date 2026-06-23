@@ -18,6 +18,7 @@ public protocol SearchInteracting: AnyObject {
 }
 
 public protocol SearchRouting: AnyObject {
+    var sourceViewController: UIViewController? { get }
     func showMovieDetail(movieId: Int, from viewController: UIViewController)
 }
 

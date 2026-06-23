@@ -23,6 +23,7 @@ public final class HomeViewController: UIViewController, HomeView {
     private let chipsStack = UIStackView()
     private let moviesCollectionView: UICollectionView
     private let loadingFooter = UIActivityIndicatorView(style: .medium)
+    private var moviesCollectionHeightConstraint: NSLayoutConstraint?
 
     private let heroLayout: UICollectionViewFlowLayout = {
         let layout = UICollectionViewFlowLayout()
@@ -70,6 +71,7 @@ public final class HomeViewController: UIViewController, HomeView {
         topTenLayout.itemSize = CGSize(width: width / 3.2, height: 180)
         let colWidth = (width - AppSpacing.gutter) / 2
         moviesLayout.itemSize = CGSize(width: colWidth, height: colWidth * 1.55)
+        updateMoviesCollectionHeight()
     }
 
     public func show(viewModel: HomeViewModel) {
@@ -87,6 +89,8 @@ public final class HomeViewController: UIViewController, HomeView {
         }
         loadingFooter.isHidden = !viewModel.isLoadingMore
         if viewModel.isLoadingMore { loadingFooter.startAnimating() } else { loadingFooter.stopAnimating() }
+        allPill.alpha = viewModel.isAllFilterActive ? 1 : 0.6
+        updateMoviesCollectionHeight()
     }
 
     public func show(errorMessage: String) {
@@ -108,6 +112,7 @@ public final class HomeViewController: UIViewController, HomeView {
         )
         viewModel = model
         moviesCollectionView.reloadData()
+        updateMoviesCollectionHeight()
     }
 
     public func showGridLoadingFooter(_ visible: Bool) {
@@ -184,6 +189,8 @@ public final class HomeViewController: UIViewController, HomeView {
         moviesCollectionView.register(MovieGridCell.self, forCellWithReuseIdentifier: MovieGridCell.id)
         moviesCollectionView.isScrollEnabled = false
         moviesCollectionView.translatesAutoresizingMaskIntoConstraints = false
+        moviesCollectionHeightConstraint = moviesCollectionView.heightAnchor.constraint(equalToConstant: 0)
+        moviesCollectionHeightConstraint?.isActive = true
 
         loadingFooter.color = AppColor.onSurfaceVariant
 
@@ -257,6 +264,20 @@ public final class HomeViewController: UIViewController, HomeView {
     @objc private func refreshPulled() {
         presenter.refreshMovies()
         scrollView.refreshControl?.endRefreshing()
+    }
+
+    private func updateMoviesCollectionHeight() {
+        let count = viewModel?.movies.count ?? 0
+        guard count > 0 else {
+            moviesCollectionHeightConstraint?.constant = 0
+            return
+        }
+        let columns = 2.0
+        let rows = ceil(Double(count) / columns)
+        let itemHeight = moviesLayout.itemSize.height
+        let spacing = moviesLayout.minimumLineSpacing
+        let height = rows * itemHeight + max(0, rows - 1) * spacing
+        moviesCollectionHeightConstraint?.constant = height
     }
 }
 

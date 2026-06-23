@@ -2,6 +2,7 @@ import UIKit
 
 public final class SearchRouter: SearchRouting {
     public weak var viewController: UIViewController?
+    public var sourceViewController: UIViewController? { viewController }
     private weak var routing: SearchRouting?
 
     public init(routing: SearchRouting) {

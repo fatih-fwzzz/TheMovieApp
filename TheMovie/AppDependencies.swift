@@ -6,6 +6,7 @@ final class AppDependencies: FeatureDependencies {
 
     let movieService: MovieServiceProtocol
     let favoritesStore: FavoritesStoreProtocol
+    let navigation = AppNavigation()
 
     private init() {
         let network = AlamofireNetworkService()

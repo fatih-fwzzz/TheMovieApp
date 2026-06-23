@@ -58,8 +58,10 @@ public final class SearchPresenter: SearchPresenting {
             guard searchResults.indices.contains(index) else { return }
             movieId = searchResults[index].id
         }
-        guard let viewController = (router as? SearchRouter)?.viewController else { return }
-        router.showMovieDetail(movieId: movieId, from: viewController)
+        guard let viewController = router.sourceViewController else { return }
+        Task { @MainActor in
+            router.showMovieDetail(movieId: movieId, from: viewController)
+        }
     }
 
     @MainActor
