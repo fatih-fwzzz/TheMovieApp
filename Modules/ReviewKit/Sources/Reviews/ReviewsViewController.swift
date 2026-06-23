@@ -8,11 +8,9 @@ public final class ReviewsViewController: UIViewController, ReviewsView {
 
     private let navBar = UIView()
     private let backButton = UIButton(type: .system)
-    private let navTitle = UILabel()
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let footerLabel = UILabel()
     private let footerSpinner = UIActivityIndicatorView(style: .medium)
-    private let headerView = UIView()
 
     public init(presenter: ReviewsPresenting) {
         self.presenter = presenter
@@ -31,7 +29,6 @@ public final class ReviewsViewController: UIViewController, ReviewsView {
 
     public func show(viewModel: ReviewsViewModel) {
         self.viewModel = viewModel
-        rebuildHeader(viewModel)
         tableView.reloadData()
     }
 
@@ -67,13 +64,8 @@ public final class ReviewsViewController: UIViewController, ReviewsView {
         backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
         backButton.tintColor = AppColor.onSurface
         backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-        navTitle.text = "User Reviews"
-        navTitle.font = AppFont.headlineMD()
-        navTitle.textColor = AppColor.highEmphasis
-        navTitle.translatesAutoresizingMaskIntoConstraints = false
         backButton.translatesAutoresizingMaskIntoConstraints = false
         navBar.addSubview(backButton)
-        navBar.addSubview(navTitle)
         view.addSubview(navBar)
         NSLayoutConstraint.activate([
             navBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -81,9 +73,7 @@ public final class ReviewsViewController: UIViewController, ReviewsView {
             navBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             navBar.heightAnchor.constraint(equalToConstant: 52),
             backButton.leadingAnchor.constraint(equalTo: navBar.leadingAnchor, constant: 16),
-            backButton.centerYAnchor.constraint(equalTo: navBar.centerYAnchor),
-            navTitle.centerXAnchor.constraint(equalTo: navBar.centerXAnchor),
-            navTitle.centerYAnchor.constraint(equalTo: navBar.centerYAnchor)
+            backButton.centerYAnchor.constraint(equalTo: navBar.centerYAnchor)
         ])
     }
 
@@ -94,6 +84,7 @@ public final class ReviewsViewController: UIViewController, ReviewsView {
         tableView.dataSource = self
         tableView.register(ReviewCell.self, forCellReuseIdentifier: ReviewCell.id)
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 0, right: 0)
         footerLabel.text = "Loading more reviews…"
         footerLabel.font = AppFont.labelSM()
         footerLabel.textColor = AppColor.onSurfaceVariant
@@ -112,42 +103,6 @@ public final class ReviewsViewController: UIViewController, ReviewsView {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-    }
-
-    private func rebuildHeader(_ model: ReviewsViewModel) {
-        headerView.subviews.forEach { $0.removeFromSuperview() }
-        let poster = UIImageView()
-        poster.layer.cornerRadius = AppRadius.roundedMD
-        poster.clipsToBounds = true
-        poster.contentMode = .scaleAspectFill
-        poster.kf.setImage(with: model.moviePosterURL)
-        poster.translatesAutoresizingMaskIntoConstraints = false
-        let title = UILabel()
-        title.text = model.movieTitle
-        title.font = AppFont.headlineMD()
-        title.textColor = AppColor.highEmphasis
-        title.numberOfLines = 2
-        let rating = UILabel()
-        rating.text = "★ \(model.ratingText) \(model.reviewCountText)"
-        rating.font = AppFont.labelSM()
-        rating.textColor = AppColor.onSurfaceVariant
-        let textStack = UIStackView(arrangedSubviews: [title, rating])
-        textStack.axis = .vertical
-        textStack.spacing = 4
-        let row = UIStackView(arrangedSubviews: [poster, textStack])
-        row.spacing = 12
-        row.translatesAutoresizingMaskIntoConstraints = false
-        headerView.addSubview(row)
-        NSLayoutConstraint.activate([
-            poster.widthAnchor.constraint(equalToConstant: 56),
-            poster.heightAnchor.constraint(equalToConstant: 84),
-            row.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 16),
-            row.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-            row.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-            row.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -16)
-        ])
-        headerView.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: 120)
-        tableView.tableHeaderView = headerView
     }
 
     @objc private func backTapped() { navigationController?.popViewController(animated: true) }

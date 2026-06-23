@@ -28,9 +28,9 @@ public final class ReviewsPresenter: ReviewsPresenting {
                 ratingText = String(format: "%.1f", payload.movie.voteAverage)
                 reviewCountText = "(\(payload.reviews.results.count)+)"
                 reviews = payload.reviews.results
-                view?.show(viewModel: makeViewModel())
+                await presentViewModel(makeViewModel())
             } catch {
-                view?.show(errorMessage: (error as? LocalizedError)?.errorDescription ?? "Failed to load reviews.")
+                await presentError((error as? LocalizedError)?.errorDescription ?? "Failed to load reviews.")
             }
         }
     }
@@ -38,19 +38,39 @@ public final class ReviewsPresenter: ReviewsPresenting {
     public func viewDidScrollNearBottom() {
         guard !isLoadingMore, !interactor.hasReachedEnd else { return }
         isLoadingMore = true
-        view?.showLoadingFooter(true)
         Task {
+            await presentLoadingFooter(true)
             do {
                 let more = try await interactor.fetchNextPage(movieId: movieId)
                 reviews.append(contentsOf: more)
                 isLoadingMore = false
-                view?.appendReviews(more.map(mapReview))
-                view?.showLoadingFooter(false)
+                await appendReviews(more.map(mapReview))
+                await presentLoadingFooter(false)
             } catch {
                 isLoadingMore = false
-                view?.showLoadingFooter(false)
+                await presentLoadingFooter(false)
             }
         }
+    }
+
+    @MainActor
+    private func presentViewModel(_ viewModel: ReviewsViewModel) {
+        view?.show(viewModel: viewModel)
+    }
+
+    @MainActor
+    private func presentError(_ message: String) {
+        view?.show(errorMessage: message)
+    }
+
+    @MainActor
+    private func appendReviews(_ items: [ReviewsViewModel.ReviewItem]) {
+        view?.appendReviews(items)
+    }
+
+    @MainActor
+    private func presentLoadingFooter(_ visible: Bool) {
+        view?.showLoadingFooter(visible)
     }
 
     private func makeViewModel() -> ReviewsViewModel {
