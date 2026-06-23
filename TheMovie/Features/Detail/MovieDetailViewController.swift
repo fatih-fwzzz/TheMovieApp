@@ -91,8 +91,10 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
             UIImage(systemName: viewModel.isFavorite ? "heart.fill" : "heart"),
             for: .normal
         )
-        favoriteButton.tintColor = .white
+        favoriteButton.tintColor = viewModel.isFavorite ? AppColor.primary : .white
         favoriteButton.isEnabled = !viewModel.isLoading
+        
+        backButton.tintColor = AppColor.primary
 
         rebuildGenres(viewModel.genres)
         castCollectionView.reloadData()
@@ -125,7 +127,13 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
         heroContainer.translatesAutoresizingMaskIntoConstraints = false
         heroContainer.addSubview(backdropImageView)
 
-        configureCircleButton(backButton, symbol: "chevron.left", action: #selector(backTapped))
+        configureCircleButton(
+            backButton,
+            symbol: "chevron.left",
+            action: #selector(backTapped),
+            usesLiquidGlass: false,
+            prominentBackground: true
+        )
         configureCircleButton(favoriteButton, symbol: "heart", action: #selector(favoriteTapped), usesLiquidGlass: false)
 
         posterImageView.contentMode = .scaleAspectFill
@@ -322,9 +330,11 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
         _ button: UIButton,
         symbol: String,
         action: Selector,
-        usesLiquidGlass: Bool = true
+        usesLiquidGlass: Bool = true,
+        prominentBackground: Bool = false
     ) {
-        button.setImage(UIImage(systemName: symbol), for: .normal)
+        let iconConfig = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold)
+        button.setImage(UIImage(systemName: symbol, withConfiguration: iconConfig), for: .normal)
         button.tintColor = .white
         button.layer.cornerRadius = 20
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -333,6 +343,10 @@ public final class MovieDetailViewController: UIViewController, MovieDetailView 
         button.addTarget(self, action: action, for: .touchUpInside)
         if usesLiquidGlass {
             LiquidGlassStyle.apply(to: button, cornerRadius: 20, tintColor: AppColor.surfaceGlass)
+        } else if prominentBackground {
+            button.backgroundColor = UIColor.black.withAlphaComponent(0.65)
+            button.layer.borderWidth = 1
+            button.layer.borderColor = UIColor.white.withAlphaComponent(0.25).cgColor
         } else {
             button.backgroundColor = AppColor.surfaceGlass
         }

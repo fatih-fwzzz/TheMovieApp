@@ -14,7 +14,7 @@ public struct ReviewsView: View {
                 Button(action: { presenter.didTapBack() }) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color(uiColor: AppColor.onSurface))
+                        .foregroundColor(Color(uiColor: AppColor.primary))
                         .frame(width: 40, height: 40)
                 }
                 .buttonStyle(.glass)
